@@ -1,16 +1,8 @@
 #ifndef RESOURCES_H
 #define RESOURCES_H
 
-#include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-
-#include <vector>
 #include <string>
-#include <stdexcept>
-#include <cmath>
-#include <cstring>
-
-#include "stb_image.h"
 
 namespace Resource {
 
