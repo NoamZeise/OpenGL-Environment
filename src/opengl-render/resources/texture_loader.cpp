@@ -8,6 +8,9 @@ namespace Resource
 #ifndef NDEBUG
 		std::cout << "loading texture: " << path << std::endl;
 #endif
+	ID = 0;
+	width = 0;
+	height = 0;
 	//stbi_set_flip_vertically_on_load(true);
 	int nrChannels;
 	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
@@ -55,7 +58,7 @@ namespace Resource
 
 	TextureLoader::TextureLoader() {}
 
-	TextureLoader::~TextureLoader() 
+	TextureLoader::~TextureLoader()
 	{
 		for(unsigned int i = 0; i < textures.size(); i++)
 		{

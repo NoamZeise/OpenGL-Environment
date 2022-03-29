@@ -12,10 +12,7 @@ ModelLoader::~ModelLoader()
 {
 	for(unsigned int i = 0; i < loadedModels.size(); i++)
 	{
-		for(unsigned int j = 0; j < loadedModels[i].meshes.size(); j++)
-		{
-			delete loadedModels[i].meshes[j];
-		}
+		delete loadedModels[i];
 	}
 }
 
@@ -34,8 +31,8 @@ Model ModelLoader::LoadModel(std::string path, TextureLoader* texLoader)
 	if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		throw std::runtime_error("failed to load model at \"" + path + "\" assimp error: " + importer.GetErrorString());
 
-	loadedModels.push_back(LoadedModel());
-	LoadedModel* ldModel = &loadedModels[loadedModels.size() - 1];
+	loadedModels.push_back(new LoadedModel());
+	LoadedModel* ldModel = loadedModels[loadedModels.size() - 1];
 	ldModel->directory = path.substr(0, path.find_last_of('/'));
 
 	//correct for blender's orientation
@@ -55,18 +52,18 @@ Model ModelLoader::LoadModel(std::string path, TextureLoader* texLoader)
 }
 
 void ModelLoader::DrawModel(Model model, TextureLoader* texLoader)
-{	
+{
 	if(model.ID >= loadedModels.size())
 	{
 		std::cerr << "model ID out of range" << std::endl;
 		return;
 	}
 
-	for (auto& mesh: loadedModels[model.ID].meshes)
+	for (auto& mesh: loadedModels[model.ID]->meshes)
 	{
 		glActiveTexture(GL_TEXTURE0);
-		texLoader->Bind(mesh->texture);
-		mesh->vertexData->Draw(GL_TRIANGLES);
+		texLoader->Bind(mesh.texture);
+		mesh.vertexData->Draw(GL_TRIANGLES);
 	}
 }
 
@@ -77,10 +74,10 @@ void ModelLoader::processNode(LoadedModel* model, aiNode* node, const aiScene* s
 	for(unsigned int i = 0; i < node->mNumMeshes; i++)
 	{
 		aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-		model->meshes.push_back(new Mesh());
-		processMesh(model->meshes[model->meshes.size() - 1], mesh, scene, texLoader, transform);
+		model->meshes.push_back(Mesh());
+		processMesh(&model->meshes[model->meshes.size() - 1], mesh, scene, texLoader, transform);
 	}
-	for(unsigned int i = 0; i < node->mNumChildren; i++, texLoader)
+	for(unsigned int i = 0; i < node->mNumChildren; i++)
 	{
 		processNode(model, node->mChildren[i], scene, texLoader, transform);
 	}
@@ -145,7 +142,7 @@ void ModelLoader::loadMaterials(Mesh* mesh, aiMaterial* material, TextureLoader*
 		}
 		if(!skip)
 		{
-			
+
 			mesh->texture = texLoader->LoadTexture(texLocation);
 #ifndef NDEBUG
 			std::cout << "^ for model" << std::endl;

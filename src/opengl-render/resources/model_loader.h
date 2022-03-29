@@ -31,24 +31,25 @@ private:
 	};
 	struct LoadedModel
 	{
+		LoadedModel() {}
 		~LoadedModel()
 		{
 			for(unsigned int j = 0; j < meshes.size(); j++)
-			{	
-				delete meshes[j]->vertexData;
+			{
+				delete meshes[j].vertexData;
 			}
 		}
-		std::vector<Mesh*> meshes;
+		std::vector<Mesh> meshes;
 		std::string directory;
 	};
 
 #ifndef NO_ASSIMP
-    void processNode(LoadedModel* model, aiNode* node, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 parentTransform);
+  void processNode(LoadedModel* model, aiNode* node, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 parentTransform);
 	void processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 transform);
 	void loadMaterials(Mesh* mesh, aiMaterial* material, TextureLoader* texLoader);
 #endif
 
-	std::vector<LoadedModel> loadedModels;
+	std::vector<LoadedModel*> loadedModels;
 	std::vector<Texture> loadedTextures;
 
 };
