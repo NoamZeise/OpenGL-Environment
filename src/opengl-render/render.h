@@ -8,12 +8,13 @@
 #include <stdexcept>
 #include <iostream>
 #include <string>
-#include <cstring>
 #include <atomic>
+#include <vector>
 
-#include "resources.h"
 #include "shader.h"
-#include "vertex_data.h"
+#include "resources/resources.h"
+#include "resources/vertex_data.h"
+#include "resources/texture_loader.h"
 
 const int MAX_DRAWS = 50;
 
@@ -24,11 +25,9 @@ public:
 	Render(GLFWwindow* window, glm::vec2 target);
 	~Render();
   void Resize(int width, int height);
-	void restartResourceLoad();
 	Resource::Texture LoadTexture(std::string filepath);
-	void endResourceLoad();
   void Begin2DDraw();
-	void DrawQuad(const Resource::Texture& texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
+	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
   void EndDraw(std::atomic<bool>& submit);
 
 private:
@@ -41,6 +40,8 @@ private:
   glm::mat4 view;
 
   VertexData* quad;
+
+  Resource::TextureLoader* textureLoader;
 
   struct Draw
   {

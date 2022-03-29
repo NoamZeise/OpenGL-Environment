@@ -11,8 +11,8 @@ App::App()
   glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
   glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-	glfwSetErrorCallback(error_callback);
-	if (!glfwInit())
+glfwSetErrorCallback(error_callback);
+if (!glfwInit())
 			throw std::runtime_error("failed to initialise glfw!");
 
 	window = glfwCreateWindow(windowWidth, windowHeight, "openGL", nullptr, nullptr);
@@ -32,6 +32,8 @@ App::App()
     	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
 
   render = new Render(window, glm::vec2(windowWidth, windowHeight));
+
+  loadAssets();
 }
 
 App::~App()
@@ -44,7 +46,7 @@ App::~App()
 
 void App::loadAssets()
 {
-
+	testTex = render->LoadTexture("textures/error copy.png");
 }
 
 void App::run()
@@ -116,11 +118,11 @@ void App::draw()
 
 render->Begin2DDraw();
 
-render->DrawQuad(Resource::Texture(), glmhelper::getModelMatrix(glm::vec4(400, 400, 100, 50), 0),
+render->DrawQuad(testTex, glmhelper::getModelMatrix(glm::vec4(400, 200, 100, 50), 0),
 	glm::vec4(1, 1, 1, 1), glm::vec4(0 , 0, 1, 1));
 
-	render->DrawQuad(Resource::Texture(), glmhelper::getModelMatrix(glm::vec4(100, 400, 100, 300), 0),
-		glm::vec4(0, 1, 1, 1), glm::vec4(0 , 0, 1, 1));
+render->DrawQuad(Resource::Texture(), glmhelper::getModelMatrix(glm::vec4(100, 200, 100, 200), 0),
+	glm::vec4(1, 1, 1, 1), glm::vec4(0, 0, 1, 1));
 
 render->EndDraw(finishedDrawSubmit);
 //submitDraw = std::thread(&Render::EndDraw, render, std::ref(finishedDrawSubmit));

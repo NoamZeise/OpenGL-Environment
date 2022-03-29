@@ -14,8 +14,7 @@
 #include <glmhelper.h>
 
 #include "opengl-render/render.h"
-#include "opengl-render/resources.h"
-#include "opengl-render/shader.h"
+#include "opengl-render/resources/resources.h"
 
 //#define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW
@@ -55,6 +54,8 @@ private:
 
 	std::thread submitDraw;
 	std::atomic<bool> finishedDrawSubmit;
+
+	Resource::Texture testTex;
 };
 
 #endif
