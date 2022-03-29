@@ -27,8 +27,10 @@ add_executable(${ProjectName}   ${SOURCES}
 #link
 target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
-    target_link_libraries(${ProjectName} glfw)
+    target_link_libraries(${ProjectName} glfw
+                                         assimp)
 elseif(MSVC)
     target_include_directories(${ProjectName} PUBLIC ${Include})
-    target_link_libraries(${ProjectName} ${Lib}glfw3.lib)
+    target_link_libraries(${ProjectName} ${Lib}glfw3.lib
+                                         ${Lib}assimp-vc140-mt.lib)
 endif()

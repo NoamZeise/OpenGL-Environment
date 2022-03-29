@@ -11,6 +11,11 @@
 
 struct Vertex
 {
+	Vertex()
+	{
+		position = glm::vec3(0);
+		texCoords = glm::vec2(0);
+	}
 	Vertex(float x, float y, float z, float tX, float tY)
 	{
 		this->position = glm::vec3(x, y, z);

@@ -3,7 +3,10 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+
 #include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
 
 #include <stdexcept>
 #include <iostream>
@@ -15,19 +18,31 @@
 #include "resources/resources.h"
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"
+#include "resources/model_loader.h"
 
-const int MAX_DRAWS = 50;
+const int MAX_2D_DRAWS = 50;
+const int MAX_3D_DRAWS = 50;
 
 class Render
 {
 public:
-  Render() {}
 	Render(GLFWwindow* window, glm::vec2 target);
 	~Render();
+  static void SetGLFWWindowHints()
+  {
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+  	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+  	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+  }
+  void EndResourceLoad() { }
   void Resize(int width, int height);
 	Resource::Texture LoadTexture(std::string filepath);
+  Resource::Model LoadModel(std::string filepath);
+  void set3DViewMatrixAndFov(glm::mat4 view, float fov);
   void Begin2DDraw();
+  void Begin3DDraw();
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
+  void DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat);
   void EndDraw(std::atomic<bool>& submit);
 
 private:
@@ -36,25 +51,43 @@ private:
 
   Shader* basicShader;
 
-  glm::mat4 proj;
-  glm::mat4 view;
+  int width;
+  int height;
+
+  glm::mat4 proj2D;
+  glm::mat4 view2D;
+
+  glm::mat4 proj3D;
+  glm::mat4 view3D;
 
   VertexData* quad;
 
   Resource::TextureLoader* textureLoader;
+  Resource::ModelLoader* modelLoader;
 
-  struct Draw
+  struct Draw2D
   {
-    Draw() {}
-    Draw(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset);
+    Draw2D() {}
+    Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset);
     Resource::Texture tex;
     glm::mat4 model;
     glm::vec4 colour;
     glm::vec4 texOffset;
   };
+  struct Draw3D
+  {
+    Draw3D() {}
+    Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix);
 
-  unsigned int currentDraw = 0;
-  Draw drawCalls[MAX_DRAWS];
+    Resource::Model model;
+    glm::mat4 modelMatrix;
+    glm::mat4 normalMatrix;
+  };
+
+  unsigned int current2DDraw = 0;
+  Draw2D draw2DCalls[MAX_2D_DRAWS];
+  unsigned int current3DDraw = 0;
+  Draw3D draw3DCalls[MAX_3D_DRAWS];
 };
 
 

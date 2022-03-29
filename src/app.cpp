@@ -3,37 +3,39 @@
 
 App::App()
 {
-	//set member variables
 	windowWidth = 800;
 	windowHeight = 450;
-	//init glfw window
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-glfwSetErrorCallback(error_callback);
-if (!glfwInit())
-			throw std::runtime_error("failed to initialise glfw!");
 
-	window = glfwCreateWindow(windowWidth, windowHeight, "openGL", nullptr, nullptr);
+	glfwSetErrorCallback(error_callback);
+	if (!glfwInit())
+		throw std::runtime_error("failed to initialise glfw!");
+
+	Render::SetGLFWWindowHints();
+
+	window = glfwCreateWindow(windowWidth, windowHeight, "OpenGL App", nullptr, nullptr);
 	if(!window)
 	{
 		glfwTerminate();
 		throw std::runtime_error("failed to create glfw window!");
 	}
-  glfwMakeContextCurrent(window);
+
+	//NEED FOR OGL
+	glfwMakeContextCurrent(window);
+	//
 	glfwSetWindowUserPointer(window, this);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	if (glfwRawMouseMotionSupported())
-    	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, GLFW_TRUE);
+	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
+	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-  render = new Render(window, glm::vec2(windowWidth, windowHeight));
+  	render = new Render(window, glm::vec2(windowWidth, windowHeight));
 
-  loadAssets();
+  	loadAssets();
+
+	finishedDrawSubmit = true;
 }
 
 App::~App()
@@ -47,6 +49,8 @@ App::~App()
 void App::loadAssets()
 {
 	testTex = render->LoadTexture("textures/error copy.png");
+	testModel = render->LoadModel("models/testScene.fbx");
+	render->EndResourceLoad();
 }
 
 void App::run()
@@ -61,9 +65,10 @@ void App::run()
 
 void App::resize(int windowWidth, int windowHeight)
 {
-	glViewport(0, 0, windowWidth, windowHeight);
 	this->windowWidth = windowWidth;
 	this->windowHeight = windowHeight;
+	if(windowWidth != 0 && windowHeight != 0 && render != nullptr)
+      render->Resize(windowWidth, windowHeight);
 }
 
 void App::update()
@@ -71,7 +76,6 @@ void App::update()
 #ifdef TIME_APP_DRAW_UPDATE
 	auto start = std::chrono::high_resolution_clock::now();
 #endif
-
 
 	glfwPollEvents();
 
@@ -93,6 +97,8 @@ void App::update()
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
 
+	cam3d.update(input, previousInput, timer);
+
 	postUpdate();
 #ifdef TIME_APP_DRAW_UPDATE
 	auto stop = std::chrono::high_resolution_clock::now();
@@ -107,6 +113,8 @@ void App::postUpdate()
 {
 	previousInput = input;
 	input.offset = 0;
+	timer.Update();
+	render->set3DViewMatrixAndFov(cam3d.getViewMatrix(), cam3d.getZoom());
 }
 
 
@@ -118,16 +126,18 @@ void App::draw()
 
 render->Begin2DDraw();
 
-render->DrawQuad(testTex, glmhelper::getModelMatrix(glm::vec4(400, 200, 100, 50), 0),
-	glm::vec4(1, 1, 1, 1), glm::vec4(0 , 0, 1, 1));
-
-render->DrawQuad(Resource::Texture(), glmhelper::getModelMatrix(glm::vec4(100, 200, 100, 200), 0),
+render->DrawQuad(Resource::Texture(), glmhelper::getModelMatrix(glm::vec4(0, 0, 100, 200), 0),
 	glm::vec4(1, 1, 1, 1), glm::vec4(0, 0, 1, 1));
+
+render->DrawQuad(testTex, glmhelper::getModelMatrix(glm::vec4(0, 0, 200, 50), 0, 0.5),
+	glm::vec4(1, 0, 0, 0.5), glm::vec4(0, 0, 1, 1));
+
+render->Begin3DDraw();
+
+render->DrawModel(testModel, glm::mat4(1.0f), glm::mat4(1.0f));
 
 render->EndDraw(finishedDrawSubmit);
 //submitDraw = std::thread(&Render::EndDraw, render, std::ref(finishedDrawSubmit));
-
-glfwSwapBuffers(window);
 
 #ifdef TIME_APP_DRAW_UPDATE
 	auto stop = std::chrono::high_resolution_clock::now();
@@ -138,8 +148,9 @@ glfwSwapBuffers(window);
 #endif
 }
 
-#pragma region GLFW_CALLBACKS
-
+/* 
+*       GLFW CALLBACKS   
+*/
 
 void App::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -196,5 +207,3 @@ void App::error_callback(int error, const char* description)
 {
     throw std::runtime_error(description);
 }
-
-#pragma endregion

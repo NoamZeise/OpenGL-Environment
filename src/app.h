@@ -11,10 +11,12 @@
 #include <atomic>
 
 #include <input.h>
+#include <timer.h>
 #include <glmhelper.h>
 
 #include "opengl-render/render.h"
 #include "opengl-render/resources/resources.h"
+#include "camera.h"
 
 //#define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW
@@ -40,7 +42,6 @@ public:
 	static void error_callback(int error, const char* description);
 #pragma endregion
 	Input input;
-  Input previousInput;
 private:
 	void loadAssets();
 	void update();
@@ -51,11 +52,16 @@ private:
 	Render* render;
 	Shader* shader;
 	int windowWidth, windowHeight;
+	Input previousInput;
+	Timer timer;
 
 	std::thread submitDraw;
 	std::atomic<bool> finishedDrawSubmit;
 
+	camera::firstPerson cam3d;
+
 	Resource::Texture testTex;
+	Resource::Model testModel;
 };
 
 #endif

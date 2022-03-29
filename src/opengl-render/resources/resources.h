@@ -25,6 +25,12 @@ namespace Resource {
   	glm::vec2 dim = glm::vec2(0, 0);
   };
 
+	struct Model
+	{
+		Model() { this->ID = 1000000; }
+		Model(unsigned int ID) { this->ID = ID; }
+		unsigned int ID;
+	};
 }
 
 #endif
