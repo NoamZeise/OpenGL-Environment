@@ -10,6 +10,7 @@
 #include <thread>
 #include <atomic>
 
+#include <audio.h>
 #include <input.h>
 #include <timer.h>
 #include <glmhelper.h>
@@ -54,6 +55,7 @@ private:
 	int windowWidth, windowHeight;
 	Input previousInput;
 	Timer timer;
+	Audio::Manager audioManager;
 
 	std::thread submitDraw;
 	std::atomic<bool> finishedDrawSubmit;

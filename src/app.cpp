@@ -36,6 +36,8 @@ App::App()
   loadAssets();
 
 	finishedDrawSubmit = true;
+
+	audioManager.Play("audio/test.wav", true, 0.5);
 }
 
 App::~App()
@@ -48,7 +50,7 @@ App::~App()
 
 void App::loadAssets()
 {
-	testTex = render->LoadTexture("textures/error copy.png");
+	testTex = render->LoadTexture("textures/error.png");
 	testModel = render->LoadModel("models/testScene.fbx");
 	render->EndResourceLoad();
 }

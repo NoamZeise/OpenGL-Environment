@@ -31,9 +31,13 @@ target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
     target_link_libraries(${ProjectName} glfw
                                          assimp
+                                         sndfile
+                                         portaudio
                                          ${CMAKE_DL_LIBS})
 elseif(MSVC)
     target_include_directories(${ProjectName} PUBLIC ${Include})
     target_link_libraries(${ProjectName} ${Lib}glfw3.lib
-                                         ${Lib}assimp-vc140-mt.lib)
+                                         ${Lib}assimp-vc140-mt.lib
+                                         ${Lib}portaudio_x64.lib
+                                         ${Lib}sndfile.lib)
 endif()
