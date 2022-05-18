@@ -31,6 +31,30 @@ namespace Resource {
 		Model(unsigned int ID) { this->ID = ID; }
 		unsigned int ID;
 	};
+
+  struct Font
+  {
+    Font() { this->ID = 1000000; }
+    Font(unsigned int ID)
+    {
+      this->ID = ID;
+    }
+    unsigned int ID;
+  };
+
+  struct QuadDraw
+  {
+	  QuadDraw(Texture tex, glm::mat4 model, glm::vec4 colour)
+	  {
+		  this->tex = tex;
+		  this->model = model;
+		  this->colour = colour;
+	  }
+	  Texture tex;
+	  glm::mat4 model;
+	  glm::vec4 colour;
+  };
+
 }
 
 #endif

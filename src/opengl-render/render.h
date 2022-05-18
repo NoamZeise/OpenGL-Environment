@@ -18,6 +18,7 @@
 #include "resources/resources.h"
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"
+#include "resources/font_loader.h"
 #include "resources/model_loader.h"
 
 const int MAX_2D_DRAWS = 50;
@@ -36,12 +37,17 @@ public:
   }
   void EndResourceLoad() { }
   void Resize(int width, int height);
+
 	Resource::Texture LoadTexture(std::string filepath);
   Resource::Model LoadModel(std::string filepath);
+	Resource::Font  LoadFont(std::string filepath);
+
   void set3DViewMatrixAndFov(glm::mat4 view, float fov);
   void Begin2DDraw();
   void Begin3DDraw();
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
+	void DrawString(Resource::Font font, std::string text, glm::vec2 position,
+								float size, float depth, glm::vec4 colour, float rotate);
   void DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat);
   void EndDraw(std::atomic<bool>& submit);
 
@@ -63,6 +69,7 @@ private:
   VertexData* quad;
 
   Resource::TextureLoader* textureLoader;
+	Resource::FontLoader* fontLoader;
   Resource::ModelLoader* modelLoader;
 
   struct Draw2D

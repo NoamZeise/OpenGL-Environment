@@ -36,6 +36,7 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   quad = new VertexData(quadVerts, quadInds);
 
   textureLoader = new Resource::TextureLoader();
+  fontLoader = new  Resource::FontLoader();
   modelLoader = new Resource::ModelLoader();
   textureLoader->LoadTexture("textures/error.png");
 }
@@ -45,6 +46,7 @@ Render::~Render()
   delete quad;
   delete basicShader;
   delete textureLoader;
+  delete fontLoader;
   delete modelLoader;
 }
 

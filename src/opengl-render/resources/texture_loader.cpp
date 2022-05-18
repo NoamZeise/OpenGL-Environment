@@ -45,6 +45,31 @@ namespace Resource
 	stbi_image_free(data);
 	}
 
+	TextureLoader::LoadedTex::LoadedTex(unsigned char* data, int width, int height, int nrChannels)
+	{
+			unsigned int format = GL_RGBA;
+			if (nrChannels == 1)
+				format = GL_RED;
+			else if (nrChannels == 3)
+				format = GL_RGB;
+			else if(nrChannels == 4)
+				format = GL_RGBA;
+			else
+			{
+				std::cerr << "failed to load character texture from font, unsupported num of channels!" << std::endl;
+				return;
+			}
+			glGenTextures(1, &ID);
+			glBindTexture(GL_TEXTURE_2D, ID);
+			glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+			glGenerateMipmap(GL_TEXTURE_2D);
+
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	}
+
 	TextureLoader::LoadedTex::~LoadedTex()
 	{
 		glDeleteTextures(1, &ID);
@@ -70,6 +95,12 @@ namespace Resource
 	{
 		textures.push_back(new LoadedTex(path));
 		return Texture(textures.size() - 1, glm::vec2(textures.back()->width, textures.back()->height), path);
+	}
+
+	Texture TextureLoader::LoadTexture(unsigned char* data, int width, int height, int nrChannels)
+	{
+		textures.push_back(new LoadedTex(data, width, height, nrChannels));
+		return Texture(textures.size() - 1, glm::vec2(textures.back()->width, textures.back()->height), "FONT");
 	}
 
 	void TextureLoader::Bind(Texture tex)
