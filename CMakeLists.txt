@@ -5,6 +5,8 @@ set(ProjectName "OpenGL-Environment")
 set(Lib "D:/noam4/Libraries/VS/lib/x64/")
 set(Include "D:/noam4/Libraries/VS/include")
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
+
 # set the project name
 project(${ProjectName} VERSION 1.0)
 
@@ -28,7 +30,8 @@ add_executable(${ProjectName}   ${SOURCES}
 target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
     target_link_libraries(${ProjectName} glfw
-                                         assimp)
+                                         assimp
+                                         ${CMAKE_DL_LIBS})
 elseif(MSVC)
     target_include_directories(${ProjectName} PUBLIC ${Include})
     target_link_libraries(${ProjectName} ${Lib}glfw3.lib

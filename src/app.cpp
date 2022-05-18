@@ -31,9 +31,9 @@ App::App()
 	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
-  	render = new Render(window, glm::vec2(windowWidth, windowHeight));
+  render = new Render(window, glm::vec2(windowWidth, windowHeight));
 
-  	loadAssets();
+  loadAssets();
 
 	finishedDrawSubmit = true;
 }
@@ -148,8 +148,8 @@ render->EndDraw(finishedDrawSubmit);
 #endif
 }
 
-/* 
-*       GLFW CALLBACKS   
+/*
+*       GLFW CALLBACKS
 */
 
 void App::framebuffer_size_callback(GLFWwindow* window, int width, int height)

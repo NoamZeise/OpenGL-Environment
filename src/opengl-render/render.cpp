@@ -5,15 +5,15 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   this->window = window;
   this->width = target.x;
   this->height = target.y;
-  
+
   if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     throw std::runtime_error("failed to load glad");
-    
+
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   glEnable(GL_CULL_FACE);
-  
+
 
   basicShader = new Shader("shaders/b.vert", "shaders/b.frag");
   basicShader->Use();
@@ -50,8 +50,8 @@ Render::~Render()
 
 void Render::Resize(int width, int height)
 {
-    this->width;
-    this->height;
+    this->width = width;
+    this->height = height;
   	glViewport(0, 0, width, height);
     proj2D = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -10.0f, 10.0f);
 }
