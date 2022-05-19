@@ -129,6 +129,8 @@ bool FontLoader::LoadedFont::loadCharacter(TextureLoader* textureLoader, FT_Face
 	char blank = 0x00;
 	for (size_t i = 0; i < face->glyph->bitmap.width * face->glyph->bitmap.rows; i++)
 	{
+
+#ifdef _MSC_VER
 		//std::cout << (int)((face->glyph->bitmap.buffer + i)[0]) << std::endl;
 		std::memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
 		std::memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
@@ -136,6 +138,14 @@ bool FontLoader::LoadedFont::loadCharacter(TextureLoader* textureLoader, FT_Face
 		std::memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
 		if((char)((face->glyph->bitmap.buffer + i)[0])  != (char)0xFF)
 			std::memcpy(buffer + buffIndex - 1, &blank, 1);
+#else
+  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
+  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
+  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
+  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
+  if((char)((face->glyph->bitmap.buffer + i)[0])  != (char)0xFF)
+    memcpy(buffer + buffIndex - 1, &blank, 1);
+#endif
 	}
 
 	Resource::Texture texture = textureLoader->LoadTexture(

@@ -31,6 +31,7 @@ add_executable(${ProjectName}   ${SOURCES}
 #link
 target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
+    target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
     target_link_libraries(${ProjectName} glfw
                                          assimp
                                          ${FREETYPE_LIBRARIES}
