@@ -13,4 +13,7 @@ void main()
         colour = texture(image, TexCoords) * spriteColour;
     else
         colour = spriteColour;
+
+    if(colour.w == 0)
+      discard;
 }
