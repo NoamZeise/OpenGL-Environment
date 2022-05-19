@@ -23,8 +23,11 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   basicShader->Use();
   glUniform1i(basicShader->Location("image"), 0);
 
+  flatShader = new Shader("shaders/flat.vert", "shaders/flat.frag");
+  flatShader->Use();
+  glUniform1i(flatShader->Location("image"), 0);
+
   view2D = glm::mat4(1.0f);
-  //glUniform1i(basicShader.Location("image"), 0);
 
   std::vector<Vertex> quadVerts = {
     Vertex(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
@@ -49,6 +52,7 @@ Render::~Render()
 {
   delete quad;
   delete basicShader;
+  delete flatShader;
   delete textureLoader;
   delete fontLoader;
   delete modelLoader;
@@ -108,20 +112,22 @@ void Render::EndDraw(std::atomic<bool>& submit)
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  basicShader->Use();
+  flatShader->Use();
 
-  glUniformMatrix4fv(basicShader->Location("projection"), 1, GL_FALSE, &proj2D[0][0]);
-  glUniformMatrix4fv(basicShader->Location("view"), 1, GL_FALSE, &view2D[0][0]);
+  glUniformMatrix4fv(flatShader->Location("projection"), 1, GL_FALSE, &proj2D[0][0]);
+  glUniformMatrix4fv(flatShader->Location("view"), 1, GL_FALSE, &view2D[0][0]);
   for(unsigned int i = 0; i < current2DDraw; i++)
   {
-    glUniformMatrix4fv(basicShader->Location("model"), 1, GL_FALSE, &draw2DCalls[i].model[0][0]);
-    glUniform4fv(basicShader->Location("spriteColour"), 1, &draw2DCalls[i].colour[0]);
-    glUniform1i(basicShader->Location("enableTex"), GL_TRUE);
-    //glUniform1i(basicShader.Location("enableFont"), GL_FALSE);
+    glUniformMatrix4fv(flatShader->Location("model"), 1, GL_FALSE, &draw2DCalls[i].model[0][0]);
+    glUniform4fv(flatShader->Location("spriteColour"), 1, &draw2DCalls[i].colour[0]);
+    glUniform4fv(flatShader->Location("texOffset"), 1, &draw2DCalls[i].texOffset[0]);
+    glUniform1i(flatShader->Location("enableTex"), GL_TRUE);
     glActiveTexture(GL_TEXTURE0);
     textureLoader->Bind(draw2DCalls[i].tex);
     quad->Draw(GL_TRIANGLES);
   }
+
+  basicShader->Use();
 
   glUniformMatrix4fv(basicShader->Location("projection"), 1, GL_FALSE, &proj3D[0][0]);
   glUniformMatrix4fv(basicShader->Location("view"), 1, GL_FALSE, &view3D[0][0]);
@@ -131,7 +137,6 @@ void Render::EndDraw(std::atomic<bool>& submit)
     glUniformMatrix4fv(basicShader->Location("model"), 1, GL_FALSE, &draw3DCalls[i].modelMatrix[0][0]);
     glUniform4fv(basicShader->Location("spriteColour"), 1, &colourWhite[0]);
     glUniform1i(basicShader->Location("enableTex"), GL_TRUE);
-    //glUniform1i(basicShader.Location("enableFont"), GL_FALSE);
     modelLoader->DrawModel(draw3DCalls[i].model, textureLoader);
   }
 

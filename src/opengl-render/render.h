@@ -60,6 +60,7 @@ private:
 	glm::vec2 targetResolution;
 
   Shader* basicShader;
+	Shader* flatShader;
 
   int width;
   int height;
