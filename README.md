@@ -7,6 +7,8 @@
 
 ### windows
 
+* put glad opengl include into your includes: https://glad.dav1d.de/ pick an opengl version at or above 3.3
+
 * download [glfw3](https://www.glfw.org/), compile and put in your lib and include directories
 
 * download [glm](https://github.com/g-truc/glm), it is header only so put the headers in your include directory
