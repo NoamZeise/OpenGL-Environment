@@ -1,14 +1,14 @@
 #include "camera.h"
 
-namespace camera
+namespace Camera
 {
-	firstPerson::firstPerson(glm::vec3 position)
+	FirstPerson::FirstPerson(glm::vec3 position)
 	{
 		_position = position;
 		calculateVectors();
 	}
 
-	glm::mat4 firstPerson::getViewMatrix()
+	glm::mat4 FirstPerson::getViewMatrix()
 	{
 		if(viewUpdated)
 		{
@@ -19,13 +19,13 @@ namespace camera
 		return view;
 	}
 
-	float firstPerson::getZoom()
+	float FirstPerson::getZoom()
 	{
 		return _zoom;
 	}
 
 
-	void firstPerson::update(Input &input, Input &prevInput, Timer &timer)
+	void FirstPerson::update(Input &input, Input &prevInput, Timer &timer)
 	{
 		viewUpdated = true;
 		//keyboard
@@ -46,12 +46,12 @@ namespace camera
 		//mouse
 		_pitch   += (float)(prevInput.Y - input.Y) * _sensitivity;
 		_yaw 	 += (float)(prevInput.X - input.X) * _sensitivity;
-	
+
 		if(_pitch > 89.0f)
 			_pitch = 89.0f;
 		if(_pitch < -89.0f)
 		 _pitch = -89.0f;
-		
+
 		//scroll
 		_zoom -= (float)input.offset * timer.FrameElapsed();
 		if(_zoom < 1.0f)
@@ -62,8 +62,8 @@ namespace camera
 		calculateVectors();
 		//std::cout << "X:" << _position.x << " Y:" << _position.y << " Z:" << _position.z << std::endl;
 	}
-	
-	void firstPerson::calculateVectors()
+
+	void FirstPerson::calculateVectors()
 	{
 		_front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 		_front.y = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));

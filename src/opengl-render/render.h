@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "shader.h"
+#include "config.h"
 #include "resources/resources.h"
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"
@@ -35,21 +36,24 @@ public:
   	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   }
-  void EndResourceLoad() { }
-  void Resize(int width, int height);
+	void set3DViewMatrixAndFov(glm::mat4 view, float fov);
 
 	Resource::Texture LoadTexture(std::string filepath);
   Resource::Model LoadModel(std::string filepath);
-	Resource::Font  LoadFont(std::string filepath);
+	Resource::Font LoadFont(std::string filepath);
+	void EndResourceLoad() { }
 
-  void set3DViewMatrixAndFov(glm::mat4 view, float fov);
   void Begin2DDraw();
   void Begin3DDraw();
+	void DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat);
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
-	void DrawString(Resource::Font font, std::string text, glm::vec2 position,
-								float size, float depth, glm::vec4 colour, float rotate);
-  void DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat);
+	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour);
+	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix);
+	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
+	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour);
   void EndDraw(std::atomic<bool>& submit);
+
+	void FramebufferResize();
 
 private:
 	GLFWwindow* window;
@@ -65,6 +69,7 @@ private:
 
   glm::mat4 proj3D;
   glm::mat4 view3D;
+	float fov;
 
   VertexData* quad;
 

@@ -3,8 +3,8 @@
 
 App::App()
 {
-	windowWidth = 800;
-	windowHeight = 450;
+	windowWidth = INITIAL_WINDOW_WIDTH;
+	windowHeight = INITIAL_WINDOW_HEIGHT;
 
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit())
@@ -19,25 +19,32 @@ App::App()
 		throw std::runtime_error("failed to create glfw window!");
 	}
 
-	//NEED FOR OGL
-	glfwMakeContextCurrent(window);
-	//
 	glfwSetWindowUserPointer(window, this);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
 	glfwSetScrollCallback(window, scroll_callback);
 	glfwSetKeyCallback(window, key_callback);
 	glfwSetMouseButtonCallback(window, mouse_button_callback);
-	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
+
+	int width = windowWidth;
+  int height = windowHeight;
+  if (settings::USE_TARGET_RESOLUTION) {
+    width = settings::TARGET_WIDTH;
+    height = settings::TARGET_HEIGHT;
+  }
 
   render = new Render(window, glm::vec2(windowWidth, windowHeight));
 
+	if (settings::FIXED_RATIO)
+		glfwSetWindowAspectRatio(window, width, height);
+
   loadAssets();
 
-	finishedDrawSubmit = true;
-
+	cam3d = Camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
 	audioManager.Play("audio/test.wav", true, 0.5);
+	finishedDrawSubmit = true;
 }
 
 App::~App()
@@ -50,8 +57,9 @@ App::~App()
 
 void App::loadAssets()
 {
-	testTex = render->LoadTexture("textures/error.png");
 	testModel = render->LoadModel("models/testScene.fbx");
+  testTex = render->LoadTexture("textures/error.png");
+  testFont = render->LoadFont("textures/Roboto-Black.ttf");
 	render->EndResourceLoad();
 }
 
@@ -67,10 +75,12 @@ void App::run()
 
 void App::resize(int windowWidth, int windowHeight)
 {
+	if (submitDraw.joinable())
+    submitDraw.join();
 	this->windowWidth = windowWidth;
 	this->windowHeight = windowHeight;
-	if(windowWidth != 0 && windowHeight != 0 && render != nullptr)
-      render->Resize(windowWidth, windowHeight);
+	if(render != nullptr && windowWidth != 0 && windowHeight != 0)
+      render->FramebufferResize();
 }
 
 void App::update()
@@ -126,17 +136,24 @@ void App::draw()
 	auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-render->Begin2DDraw();
-
-render->DrawQuad(Resource::Texture(), glmhelper::getModelMatrix(glm::vec4(0, 0, 100, 200), 0),
-	glm::vec4(1, 1, 1, 1), glm::vec4(0, 0, 1, 1));
-
-render->DrawQuad(testTex, glmhelper::getModelMatrix(glm::vec4(0, 0, 200, 50), 0, 0.5),
-	glm::vec4(1, 0, 0, 0.5), glm::vec4(0, 0, 1, 1));
-
 render->Begin3DDraw();
 
-render->DrawModel(testModel, glm::mat4(1.0f), glm::mat4(1.0f));
+render->DrawModel(
+		testModel, glm::mat4(1.0f),
+		glm::inverseTranspose(cam3d.getViewMatrix() * glm::mat4(1.0f)));
+
+render->Begin2DDraw();
+
+render->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,
+										glm::vec4(1), 90.0f);
+
+render->DrawQuad(testTex,
+								 glmhelper::getModelMatrix(glm::vec4(350, 200, 100, 100), 0, -1),
+								 glm::vec4(1), glm::vec4(0, 0, 1, 1));
+
+render->DrawQuad(testTex,
+									glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
+									glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
 
 render->EndDraw(finishedDrawSubmit);
 //submitDraw = std::thread(&Render::EndDraw, render, std::ref(finishedDrawSubmit));
@@ -148,6 +165,21 @@ render->EndDraw(finishedDrawSubmit);
 	<< std::chrono::duration_cast<std::chrono::microseconds>(stop - start).count()
 	<< " microseconds" << std::endl;
 #endif
+}
+
+glm::vec2 App::correctedPos(glm::vec2 pos)
+{
+  if (settings::USE_TARGET_RESOLUTION)
+    return glm::vec2(
+        pos.x * ((float)settings::TARGET_WIDTH / (float)windowWidth),
+        pos.y * ((float)settings::TARGET_HEIGHT / (float)windowHeight));
+
+  return glm::vec2(pos.x, pos.y);
+}
+
+glm::vec2 App::correctedMouse()
+{
+  return correctedPos(glm::vec2(input.X, input.Y));
 }
 
 /*

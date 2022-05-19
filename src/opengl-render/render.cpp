@@ -2,9 +2,13 @@
 
 Render::Render(GLFWwindow *window, glm::vec2 target)
 {
+  glfwMakeContextCurrent(window);
+
   this->window = window;
   this->width = target.x;
   this->height = target.y;
+
+  this->targetResolution = target;
 
   if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
     throw std::runtime_error("failed to load glad");
@@ -18,8 +22,6 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   basicShader = new Shader("shaders/b.vert", "shaders/b.frag");
   basicShader->Use();
   glUniform1i(basicShader->Location("image"), 0);
-
-  Resize(target.x, target.y);
 
   view2D = glm::mat4(1.0f);
   //glUniform1i(basicShader.Location("image"), 0);
@@ -39,6 +41,8 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   fontLoader = new  Resource::FontLoader();
   modelLoader = new Resource::ModelLoader();
   textureLoader->LoadTexture("textures/error.png");
+
+  FramebufferResize();
 }
 
 Render::~Render()
@@ -48,14 +52,6 @@ Render::~Render()
   delete textureLoader;
   delete fontLoader;
   delete modelLoader;
-}
-
-void Render::Resize(int width, int height)
-{
-    this->width = width;
-    this->height = height;
-  	glViewport(0, 0, width, height);
-    proj2D = glm::ortho(0.0f, (float)width, (float)height, 0.0f, -10.0f, 10.0f);
 }
 
 Resource::Texture Render::LoadTexture(std::string filepath)
@@ -68,8 +64,14 @@ Resource::Model Render::LoadModel(std::string filepath)
   return modelLoader->LoadModel(filepath, textureLoader);
 }
 
+Resource::Font Render::LoadFont(std::string filepath)
+{
+  return fontLoader->LoadFont(filepath, textureLoader);
+}
+
 void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov)
 {
+  this->fov = fov;
   view3D = view;
   proj3D = glm::perspective(glm::radians(fov),
 			((float)width) / ((float)height), 0.1f, 500.0f);
@@ -137,6 +139,14 @@ void Render::EndDraw(std::atomic<bool>& submit)
   submit = true;
 }
 
+void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat)
+{
+  if(current3DDraw < MAX_3D_DRAWS)
+  {
+    draw3DCalls[current3DDraw++] = Draw3D(model, modelMatrix, normalMat);
+  }
+}
+
 void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset)
 {
   if(current2DDraw < MAX_2D_DRAWS)
@@ -145,10 +155,45 @@ void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec
   }
 }
 
-void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat)
+void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour)
 {
-  if(current3DDraw < MAX_3D_DRAWS)
+  DrawQuad(texture, modelMatrix, colour, glm::vec4(0, 0, 1, 1));
+}
+
+void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix)
+{
+  DrawQuad(texture, modelMatrix, glm::vec4(1), glm::vec4(0, 0, 1, 1));
+}
+
+void Render::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
+{
+  auto draws = fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
+
+  for(const auto &draw: draws)
   {
-    draw3DCalls[current3DDraw++] = Draw3D(model, modelMatrix, normalMat);
+    DrawQuad(draw.tex, draw.model, draw.colour);
   }
+}
+
+void Render::FramebufferResize()
+{
+  glfwGetWindowSize(window, &this->width, &this->height);
+  glViewport(0, 0, width, height);
+
+  float deviceRatio = (float)width /
+                  (float)height;
+  float virtualRatio = targetResolution.x / targetResolution.y;
+  float xCorrection = width / targetResolution.x;
+  float yCorrection = height / targetResolution.y;
+
+  float correction;
+  if (virtualRatio < deviceRatio) {
+    correction = yCorrection;
+  } else {
+    correction = xCorrection;
+  }
+  proj2D = glm::ortho(
+      0.0f, (float)width / correction, (float)height / correction, 0.0f, -10.0f, 10.0f);
+
+  set3DViewMatrixAndFov(view3D, fov);
 }

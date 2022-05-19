@@ -1,14 +1,14 @@
 #ifndef APP_H
 #define APP_H
 
+#include <atomic>
+#include <iostream>
+#include <thread>
+
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-
-#include <iostream>
-#include <thread>
-#include <atomic>
 
 #include <audio.h>
 #include <input.h>
@@ -17,14 +17,12 @@
 
 #include "opengl-render/render.h"
 #include "opengl-render/resources/resources.h"
+#include "opengl-render/config.h"
+
 #include "camera.h"
 
 //#define TIME_APP_DRAW_UPDATE
 //#define MULTI_UPDATE_ON_SLOW_DRAW
-
-const bool FIXED_RATIO = false;
-const int TARGET_WIDTH = 1920;
-const int TARGET_HEIGHT = 1080;
 
 class App
 {
@@ -43,27 +41,33 @@ public:
 	static void error_callback(int error, const char* description);
 #pragma endregion
 	Input input;
+
 private:
 	void loadAssets();
 	void update();
 	void postUpdate();
 	void draw();
 
+	glm::vec2 correctedPos(glm::vec2 pos);
+	glm::vec2 correctedMouse();
+
+	const int INITIAL_WINDOW_WIDTH = 1000;
+  const int INITIAL_WINDOW_HEIGHT = 700;
+
 	GLFWwindow* window;
 	Render* render;
-	Shader* shader;
 	int windowWidth, windowHeight;
 	Input previousInput;
 	Timer timer;
+	Camera::FirstPerson cam3d;
 	Audio::Manager audioManager;
 
 	std::thread submitDraw;
 	std::atomic<bool> finishedDrawSubmit;
 
-	camera::firstPerson cam3d;
-
-	Resource::Texture testTex;
 	Resource::Model testModel;
+  Resource::Texture testTex;
+  Resource::Font testFont;
 };
 
 #endif
