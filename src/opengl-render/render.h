@@ -56,10 +56,27 @@ public:
 	void FramebufferResize();
 
 private:
+
+	struct LightingParameters
+	{
+		LightingParameters()
+		{
+			ambient = glm::vec4(1.0f, 1.0f, 1.0f, 0.6f);
+    	diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 0.7f);
+    	specular = glm::vec4(0.1f, 0.1f, 0.1f, 5.0f);
+    	direction = glm::vec4(0.3f, -0.3f, -0.5f, 0.0f);
+		}
+
+		alignas(16) glm::vec4 ambient;
+		alignas(16) glm::vec4 diffuse;
+		alignas(16) glm::vec4 specular;
+		alignas(16) glm::vec4 direction;
+	};
+
 	GLFWwindow* window;
 	glm::vec2 targetResolution;
 
-  Shader* basicShader;
+  Shader* blinnPhongShader;
 	Shader* flatShader;
 
   int width;

@@ -19,9 +19,9 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   glEnable(GL_CULL_FACE);
 
 
-  basicShader = new Shader("shaders/b.vert", "shaders/b.frag");
-  basicShader->Use();
-  glUniform1i(basicShader->Location("image"), 0);
+  blinnPhongShader = new Shader("shaders/3D-lighting.vert", "shaders/blinnphong.frag");
+  blinnPhongShader->Use();
+  glUniform1i(blinnPhongShader->Location("image"), 0);
 
   flatShader = new Shader("shaders/flat.vert", "shaders/flat.frag");
   flatShader->Use();
@@ -29,13 +29,13 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
 
   view2D = glm::mat4(1.0f);
 
-  std::vector<Vertex> quadVerts = {
-    Vertex(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-    Vertex(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
-    Vertex(0.0f, 0.0f, 0.0f, 0.0f, 0.0f),
-    Vertex(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-    Vertex(1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
-    Vertex(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
+  std::vector<Vertex2D> quadVerts = {
+    Vertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+    Vertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
+    Vertex2D(0.0f, 0.0f, 0.0f, 0.0f, 0.0f),
+    Vertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
+    Vertex2D(1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
+    Vertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
   };
   std::vector<unsigned int> quadInds =  {0, 1, 2, 3, 4, 5};
   quad = new VertexData(quadVerts, quadInds);
@@ -51,7 +51,7 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
 Render::~Render()
 {
   delete quad;
-  delete basicShader;
+  delete blinnPhongShader;
   delete flatShader;
   delete textureLoader;
   delete fontLoader;
@@ -112,6 +112,8 @@ void Render::EndDraw(std::atomic<bool>& submit)
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+//Draw 2D
+
   flatShader->Use();
 
   glUniformMatrix4fv(flatShader->Location("projection"), 1, GL_FALSE, &proj2D[0][0]);
@@ -127,16 +129,24 @@ void Render::EndDraw(std::atomic<bool>& submit)
     quad->Draw(GL_TRIANGLES);
   }
 
-  basicShader->Use();
+//Draw 3D
 
-  glUniformMatrix4fv(basicShader->Location("projection"), 1, GL_FALSE, &proj3D[0][0]);
-  glUniformMatrix4fv(basicShader->Location("view"), 1, GL_FALSE, &view3D[0][0]);
+  blinnPhongShader->Use();
+  glUniformMatrix4fv(blinnPhongShader->Location("projection"), 1, GL_FALSE, &proj3D[0][0]);
+  glUniformMatrix4fv(blinnPhongShader->Location("view"), 1, GL_FALSE, &view3D[0][0]);
+  LightingParameters lighting;
+  lighting.direction = glm::transpose(glm::inverse(view3D)) * lighting.direction;
+  glUniform4fv(blinnPhongShader->Location("lighting.ambient"), 1, &lighting.ambient[0]);
+  glUniform4fv(blinnPhongShader->Location("lighting.diffuse"), 1, &lighting.diffuse[0]);
+  glUniform4fv(blinnPhongShader->Location("lighting.specular"), 1, &lighting.specular[0]);
+  glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.direction[0]);
   glm::vec4 colourWhite = glm::vec4(1);
   for(unsigned int i = 0; i < current3DDraw; i++)
   {
-    glUniformMatrix4fv(basicShader->Location("model"), 1, GL_FALSE, &draw3DCalls[i].modelMatrix[0][0]);
-    glUniform4fv(basicShader->Location("spriteColour"), 1, &colourWhite[0]);
-    glUniform1i(basicShader->Location("enableTex"), GL_TRUE);
+    glUniformMatrix4fv(blinnPhongShader->Location("model"), 1, GL_FALSE, &draw3DCalls[i].modelMatrix[0][0]);
+    glUniformMatrix4fv(blinnPhongShader->Location("normalMat"), 1, GL_FALSE, &draw3DCalls[i].normalMatrix[0][0]);
+    glUniform4fv(blinnPhongShader->Location("spriteColour"), 1, &colourWhite[0]);
+    glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
     modelLoader->DrawModel(draw3DCalls[i].model, textureLoader);
   }
 

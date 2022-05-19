@@ -12,7 +12,6 @@
 #include <fstream>
 #include <vector>
 
-
 class Shader
 {
 public:

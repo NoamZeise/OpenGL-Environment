@@ -87,27 +87,29 @@ void ModelLoader::processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, 
 	loadMaterials(mesh, scene->mMaterials[aimesh->mMaterialIndex], texLoader);
 
 	//vertcies
-	std::vector<Vertex> verticies;
+	std::vector<Vertex3D> verticies;
 	for(unsigned int i = 0; i < aimesh->mNumVertices;i++)
 	{
 		aiVector3D transformedVertex = transform * aimesh->mVertices[i];
-		Vertex vertex;
+		Vertex3D vertex;
 		vertex.position.x = transformedVertex.x;
 		vertex.position.y = transformedVertex.y;
 		vertex.position.z = transformedVertex.z;
-		/*if(aimesh->HasNormals())
+		if(aimesh->HasNormals())
 		{
 			vertex.normal.x = aimesh->mNormals[i].x;
 			vertex.normal.y = aimesh->mNormals[i].y;
 			vertex.normal.z = aimesh->mNormals[i].z;
 		}
 		else
-			vertex.normal = glm::vec3(0);*/
+			vertex.normal = glm::vec3(0);
 		if(aimesh->mTextureCoords[0])
 		{
 			vertex.texCoords.x = aimesh->mTextureCoords[0][i].x;
 			vertex.texCoords.y = aimesh->mTextureCoords[0][i].y;
 		}
+		else
+			vertex.texCoords = glm::vec2(0);
 
 		verticies.push_back(vertex);
 	}
