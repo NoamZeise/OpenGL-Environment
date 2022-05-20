@@ -21,6 +21,7 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
 
   blinnPhongShader = new Shader("shaders/3D-lighting.vert", "shaders/blinnphong.frag");
   blinnPhongShader->Use();
+
   glUniform1i(blinnPhongShader->Location("image"), 0);
 
   flatShader = new Shader("shaders/flat.vert", "shaders/flat.frag");
@@ -39,6 +40,15 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   };
   std::vector<unsigned int> quadInds =  {0, 1, 2, 3, 4, 5};
   quad = new VertexData(quadVerts, quadInds);
+
+  glGenBuffers(1, &model3DSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model3DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DModel), &perInstance3DModel, GL_DYNAMIC_COPY);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+  glGenBuffers(1, &normal3DSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, normal3DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DNormal), &perInstance3DNormal, GL_DYNAMIC_COPY);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
 
   textureLoader = new Resource::TextureLoader();
   fontLoader = new  Resource::FontLoader();
@@ -141,17 +151,45 @@ void Render::EndDraw(std::atomic<bool>& submit)
   glUniform4fv(blinnPhongShader->Location("lighting.specular"), 1, &lighting.specular[0]);
   glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.direction[0]);
   glm::vec4 colourWhite = glm::vec4(1);
+  glUniform4fv(blinnPhongShader->Location("spriteColour"), 1, &colourWhite[0]);
+  glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
+
+  Resource::Model currentModel;
+  int drawCount = 0;
   for(unsigned int i = 0; i < current3DDraw; i++)
   {
-    glUniformMatrix4fv(blinnPhongShader->Location("model"), 1, GL_FALSE, &draw3DCalls[i].modelMatrix[0][0]);
-    glUniformMatrix4fv(blinnPhongShader->Location("normalMat"), 1, GL_FALSE, &draw3DCalls[i].normalMatrix[0][0]);
-    glUniform4fv(blinnPhongShader->Location("spriteColour"), 1, &colourWhite[0]);
-    glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
-    modelLoader->DrawModel(draw3DCalls[i].model, textureLoader);
+    if((currentModel.ID != draw3DCalls[i].model.ID && drawCount > 0) || drawCount >= MAX_3D_DRAWS)
+    {
+      draw3DBatch(drawCount, currentModel);
+      drawCount = 0;
+    }
+    currentModel = draw3DCalls[i].model;
+    perInstance3DModel[drawCount] = draw3DCalls[i].modelMatrix;
+    perInstance3DNormal[drawCount] = draw3DCalls[i].normalMatrix;
+    drawCount++;
+  }
+  if(drawCount != 0)
+  {
+    draw3DBatch(drawCount, currentModel);
   }
 
   glfwSwapBuffers(window);
   submit = true;
+}
+
+void Render::draw3DBatch(int drawCount, Resource::Model model)
+{
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model3DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DModel), perInstance3DModel, GL_DYNAMIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, model3DSSBO);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, normal3DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DNormal), perInstance3DNormal, GL_DYNAMIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, normal3DSSBO);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+
+  modelLoader->DrawModelInstanced(model, textureLoader, drawCount);
 }
 
 void Render::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat)

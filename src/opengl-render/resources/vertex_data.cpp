@@ -57,6 +57,12 @@ void VertexData::Draw(unsigned int mode)
 	glDrawElements(mode, size, GL_UNSIGNED_INT, 0);
 }
 
+void VertexData::DrawInstanced(unsigned int mode, int count)
+{
+	glBindVertexArray(VAO);
+	glDrawElementsInstanced(mode, size, GL_UNSIGNED_INT, 0, count);
+}
+
 void VertexData::Draw(unsigned int mode, unsigned int verticies)
 {
 	if (verticies > size)

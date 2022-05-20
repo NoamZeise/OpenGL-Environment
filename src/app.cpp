@@ -138,9 +138,15 @@ void App::draw()
 
 render->Begin3DDraw();
 
-render->DrawModel(
-		testModel, glm::mat4(1.0f),
-		glm::inverseTranspose(cam3d.getViewMatrix() * glm::mat4(1.0f)));
+for(int x = 0; x < 100; x++)
+{
+	for(int y = 0; y < 100; y++)
+	{
+		render->DrawModel(
+			testModel, glm::translate(glm::mat4(1.0f), glm::vec3(x*10, y*10, 0)),
+			glm::inverseTranspose(cam3d.getViewMatrix() * glm::mat4(1.0f)));
+	}
+}
 
 render->Begin2DDraw();
 

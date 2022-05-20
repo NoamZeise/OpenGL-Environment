@@ -67,6 +67,22 @@ void ModelLoader::DrawModel(Model model, TextureLoader* texLoader)
 	}
 }
 
+void ModelLoader::DrawModelInstanced(Model model, TextureLoader* texLoader, int count)
+{
+	if(model.ID >= loadedModels.size())
+	{
+		std::cerr << "model ID out of range" << std::endl;
+		return;
+	}
+
+	for (auto& mesh: loadedModels[model.ID]->meshes)
+	{
+		glActiveTexture(GL_TEXTURE0);
+		texLoader->Bind(mesh.texture);
+		mesh.vertexData->DrawInstanced(GL_TRIANGLES, count);
+	}
+}
+
 #ifndef NO_ASSIMP
 void ModelLoader::processNode(LoadedModel* model, aiNode* node, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 parentTransform)
 {

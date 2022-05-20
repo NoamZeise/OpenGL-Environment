@@ -59,6 +59,7 @@ public:
 	~VertexData();
 
 	void Draw(unsigned int mode);
+	void DrawInstanced(unsigned int mode, int count);
 	void Draw(unsigned int mode, unsigned int verticies);
 
 private:

@@ -22,6 +22,7 @@ public:
 	~ModelLoader();
 	Model LoadModel(std::string path, TextureLoader* texLoader);
 	void DrawModel(Model model, TextureLoader* texLoader);
+	void DrawModelInstanced(Model model, TextureLoader* texLoader, int count);
 
 private:
 	struct Mesh

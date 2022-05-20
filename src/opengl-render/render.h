@@ -22,8 +22,12 @@
 #include "resources/font_loader.h"
 #include "resources/model_loader.h"
 
-const int MAX_2D_DRAWS = 50;
-const int MAX_3D_DRAWS = 50;
+//match in shaders
+const int MAX_2D_DRAWS = 10000;
+const int MAX_3D_DRAWS = 10000;
+
+const int MAX_2D_BATCH = 10000;
+const int MAX_3D_BATCH = 10000;
 
 class Render
 {
@@ -56,6 +60,8 @@ public:
 	void FramebufferResize();
 
 private:
+
+	void draw3DBatch(int drawCount, Resource::Model model);
 
 	struct LightingParameters
 	{
@@ -118,6 +124,11 @@ private:
   Draw2D draw2DCalls[MAX_2D_DRAWS];
   unsigned int current3DDraw = 0;
   Draw3D draw3DCalls[MAX_3D_DRAWS];
+
+	glm::mat4 perInstance3DModel[MAX_3D_BATCH];
+	glm::mat4 perInstance3DNormal[MAX_3D_BATCH];
+	GLuint model3DSSBO;
+	GLuint normal3DSSBO;
 };
 
 
