@@ -62,6 +62,7 @@ public:
 private:
 
 	void draw3DBatch(int drawCount, Resource::Model model);
+	void draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour);
 
 	struct LightingParameters
 	{
@@ -124,6 +125,11 @@ private:
   Draw2D draw2DCalls[MAX_2D_DRAWS];
   unsigned int current3DDraw = 0;
   Draw3D draw3DCalls[MAX_3D_DRAWS];
+
+	glm::mat4 perInstance2DModel[MAX_2D_BATCH];
+	glm::vec4 perInstance2DTexOffset[MAX_2D_BATCH];
+	GLuint model2DSSBO;
+	GLuint texOffset2DSSBO;
 
 	glm::mat4 perInstance3DModel[MAX_3D_BATCH];
 	glm::mat4 perInstance3DNormal[MAX_3D_BATCH];

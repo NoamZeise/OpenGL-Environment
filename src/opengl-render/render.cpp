@@ -43,11 +43,22 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
 
   glGenBuffers(1, &model3DSSBO);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, model3DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DModel), &perInstance3DModel, GL_DYNAMIC_COPY);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DModel), &perInstance3DModel, GL_DYNAMIC_DRAW);
   glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+
   glGenBuffers(1, &normal3DSSBO);
   glBindBuffer(GL_SHADER_STORAGE_BUFFER, normal3DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DNormal), &perInstance3DNormal, GL_DYNAMIC_COPY);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DNormal), &perInstance3DNormal, GL_DYNAMIC_DRAW);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+
+  glGenBuffers(1, &model2DSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model2DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DModel), &perInstance2DModel, GL_DYNAMIC_DRAW);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+
+  glGenBuffers(1, &texOffset2DSSBO);
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, texOffset2DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DTexOffset), &perInstance2DTexOffset, GL_DYNAMIC_DRAW);
   glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
 
   textureLoader = new Resource::TextureLoader();
@@ -128,15 +139,29 @@ void Render::EndDraw(std::atomic<bool>& submit)
 
   glUniformMatrix4fv(flatShader->Location("projection"), 1, GL_FALSE, &proj2D[0][0]);
   glUniformMatrix4fv(flatShader->Location("view"), 1, GL_FALSE, &view2D[0][0]);
+  glUniform1i(flatShader->Location("enableTex"), GL_TRUE);
+
+  Resource::Texture currentTexture;
+  glm::vec4 currentColour;
+
+  int drawCount = 0;
   for(unsigned int i = 0; i < current2DDraw; i++)
   {
-    glUniformMatrix4fv(flatShader->Location("model"), 1, GL_FALSE, &draw2DCalls[i].model[0][0]);
-    glUniform4fv(flatShader->Location("spriteColour"), 1, &draw2DCalls[i].colour[0]);
-    glUniform4fv(flatShader->Location("texOffset"), 1, &draw2DCalls[i].texOffset[0]);
-    glUniform1i(flatShader->Location("enableTex"), GL_TRUE);
-    glActiveTexture(GL_TEXTURE0);
-    textureLoader->Bind(draw2DCalls[i].tex);
-    quad->Draw(GL_TRIANGLES);
+    if((currentTexture.ID != draw2DCalls[i].tex.ID || currentColour != draw2DCalls[i].colour) && drawCount > 0)
+    {
+      draw2DBatch(drawCount, currentTexture, currentColour);
+      drawCount = 0;
+    }
+    currentTexture = draw2DCalls[i].tex;
+    currentColour = draw2DCalls[i].colour;
+    perInstance2DModel[drawCount] = draw2DCalls[i].model;
+    perInstance2DTexOffset[drawCount] = draw2DCalls[i].texOffset;
+
+    drawCount++;
+  }
+  if(drawCount != 0)
+  {
+    draw2DBatch(drawCount, currentTexture, currentColour);
   }
 
 //Draw 3D
@@ -155,7 +180,7 @@ void Render::EndDraw(std::atomic<bool>& submit)
   glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
 
   Resource::Model currentModel;
-  int drawCount = 0;
+  drawCount = 0;
   for(unsigned int i = 0; i < current3DDraw; i++)
   {
     if((currentModel.ID != draw3DCalls[i].model.ID && drawCount > 0) || drawCount >= MAX_3D_DRAWS)
@@ -175,6 +200,25 @@ void Render::EndDraw(std::atomic<bool>& submit)
 
   glfwSwapBuffers(window);
   submit = true;
+}
+
+void Render::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour)
+{
+  glUniform4fv(flatShader->Location("spriteColour"), 1, &currentColour[0]);
+
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model2DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DModel), perInstance2DModel, GL_DYNAMIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, model2DSSBO);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+
+  glBindBuffer(GL_SHADER_STORAGE_BUFFER, texOffset2DSSBO);
+  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DTexOffset), perInstance2DTexOffset, GL_DYNAMIC_DRAW);
+  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, texOffset2DSSBO);
+  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
+
+  glActiveTexture(GL_TEXTURE0);
+  textureLoader->Bind(texture);
+  quad->DrawInstanced(GL_TRIANGLES, drawCount);
 }
 
 void Render::draw3DBatch(int drawCount, Resource::Model model)

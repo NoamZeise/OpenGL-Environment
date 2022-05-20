@@ -136,8 +136,6 @@ void App::draw()
 	auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-render->Begin3DDraw();
-
 for(int x = 0; x < 100; x++)
 {
 	for(int y = 0; y < 100; y++)
@@ -153,9 +151,13 @@ render->Begin2DDraw();
 render->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,
 										glm::vec4(1), 90.0f);
 
-render->DrawQuad(testTex,
-								 glmhelper::getModelMatrix(glm::vec4(350, 200, 100, 100), 0, -1),
+for(int i = 0; i < 50; i++)
+{
+	for (int j = 0; j < 50; j++)
+	render->DrawQuad(testTex,
+								 glmhelper::getModelMatrix(glm::vec4(0 + (i * 15), 0 + (j * 15), 100, 100), 0, -1),
 								 glm::vec4(1), glm::vec4(0, 0, 1, 1));
+}
 
 render->DrawQuad(testTex,
 									glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
