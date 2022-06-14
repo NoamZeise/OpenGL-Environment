@@ -40,7 +40,8 @@ public:
   	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
   	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
   }
-	void set3DViewMatrixAndFov(glm::mat4 view, float fov);
+    void set3DViewMatrixAndFov(glm::mat4 view, float fov);
+    void set2DViewMatrixAndScale(glm::mat4 view, float scale);
 
 	Resource::Texture LoadTexture(std::string filepath);
   Resource::Model LoadModel(std::string filepath);
@@ -54,7 +55,8 @@ public:
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour);
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix);
 	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
-	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour);
+  void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour);
+  float MeasureString(Resource::Font font, std::string text, float size);
   void EndDraw(std::atomic<bool>& submit);
 
 	void FramebufferResize();
@@ -91,6 +93,7 @@ private:
 
   glm::mat4 proj2D;
   glm::mat4 view2D;
+  float scale = 1.0f;
 
   glm::mat4 proj3D;
   glm::mat4 view3D;

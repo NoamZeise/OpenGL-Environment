@@ -3,7 +3,7 @@
 
 App::App()
 {
-	windowWidth = INITIAL_WINDOW_WIDTH;
+    windowWidth = INITIAL_WINDOW_WIDTH;
 	windowHeight = INITIAL_WINDOW_HEIGHT;
 
 	glfwSetErrorCallback(error_callback);
@@ -19,6 +19,7 @@ App::App()
 		throw std::runtime_error("failed to create glfw window!");
 	}
 
+
 	glfwSetWindowUserPointer(window, this);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
 	glfwSetCursorPosCallback(window, mouse_callback);
@@ -29,18 +30,18 @@ App::App()
 	glfwSetInputMode(window, GLFW_RAW_MOUSE_MOTION, glfwRawMouseMotionSupported());
 
 	int width = windowWidth;
-  int height = windowHeight;
-  if (settings::USE_TARGET_RESOLUTION) {
-    width = settings::TARGET_WIDTH;
-    height = settings::TARGET_HEIGHT;
-  }
+	int height = windowHeight;
+	if (settings::USE_TARGET_RESOLUTION) {
+		width = settings::TARGET_WIDTH;
+		height = settings::TARGET_HEIGHT;
+	}
 
-  render = new Render(window, glm::vec2(windowWidth, windowHeight));
+	render = new Render(window, glm::vec2(windowWidth, windowHeight));
 
 	if (settings::FIXED_RATIO)
 		glfwSetWindowAspectRatio(window, width, height);
 
-  loadAssets();
+	loadAssets();
 
 	cam3d = Camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
 	audioManager.Play("audio/test.wav", true, 0.5);
@@ -136,34 +137,21 @@ void App::draw()
 	auto start = std::chrono::high_resolution_clock::now();
 #endif
 
-for(int x = 0; x < 100; x++)
-{
-	for(int y = 0; y < 100; y++)
-	{
-		render->DrawModel(
-			testModel, glm::translate(glm::mat4(1.0f), glm::vec3(x*10, y*10, 0)),
+render->DrawModel(
+			testModel, glm::translate(glm::mat4(1.0f), glm::vec3(0*10, 0*10, 0)),
 			glm::inverseTranspose(cam3d.getViewMatrix() * glm::mat4(1.0f)));
-	}
-}
 
 render->Begin2DDraw();
 
 render->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,
 										glm::vec4(1), 90.0f);
 
-for(int i = 0; i < 50; i++)
-{
-	for (int j = 0; j < 50; j++)
-	render->DrawQuad(testTex,
-								 glmhelper::getModelMatrix(glm::vec4(0 + (i * 15), 0 + (j * 15), 100, 100), 0, -1),
-								 glm::vec4(1), glm::vec4(0, 0, 1, 1));
-}
-
 render->DrawQuad(testTex,
 									glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
 									glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
 
 render->EndDraw(finishedDrawSubmit);
+
 //submitDraw = std::thread(&Render::EndDraw, render, std::ref(finishedDrawSubmit));
 
 #ifdef TIME_APP_DRAW_UPDATE
