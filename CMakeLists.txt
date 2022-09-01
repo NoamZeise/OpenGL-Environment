@@ -5,6 +5,8 @@ set(ProjectName "OpenGL-Environment")
 #windows only
 set(Lib "D:/noam4/Libraries/VS/lib/x64/")
 set(Include "D:/noam4/Libraries/VS/include")
+set(Lib_Unix "/home/noam/Documents/windows-graphics-libs/lib/")
+set(Include_Unix "/home/noam/Documents/windows-graphics-libs/include/")
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
 
@@ -15,8 +17,8 @@ set(CMAKE_CXX_STANDARD 14)
 
 #packages
 if(UNIX)
-    find_package(glfw3 3.3 REQUIRED)
-    find_package(Freetype REQUIRED)
+ #   find_package(glfw3 3.3 REQUIRED)
+ #   find_package(Freetype REQUIRED)
 endif()
 
 #add executables
@@ -31,13 +33,20 @@ add_executable(${ProjectName}   ${SOURCES}
 #link
 target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
-    target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
-    target_link_libraries(${ProjectName} glfw
-                                         assimp
-                                         ${FREETYPE_LIBRARIES}
-                                         sndfile
-                                         portaudio
-                                         ${CMAKE_DL_LIBS})
+    #target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
+    #target_link_libraries(${ProjectName} glfw
+    #                                     assimp
+    #                                     ${FREETYPE_LIBRARIES}
+    #                                     sndfile
+    #                                     portaudio
+    #                                     ${CMAKE_DL_LIBS})
+	target_include_directories(${ProjectName} PUBLIC ${Include_Unix})	
+    	target_link_libraries(${ProjectName} ${Lib_Unix}libglfw3dll.a
+      #                                   ${Lib_Unix}freetype.lib
+                                         ${Lib_Unix}assimp-vc140-mt.lib
+                                         ${Lib_Unix}portaudio_x64.lib
+                                         ${Lib_Unix}sndfile.lib
+					 )
 elseif(MSVC)
     target_include_directories(${ProjectName} PUBLIC ${Include})
     target_link_libraries(${ProjectName} ${Lib}glfw3.lib

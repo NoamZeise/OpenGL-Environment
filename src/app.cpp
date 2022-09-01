@@ -1,4 +1,5 @@
 #include "app.h"
+#include <GLFW/glfw3.h>
 
 
 App::App()
@@ -18,7 +19,6 @@ App::App()
 		glfwTerminate();
 		throw std::runtime_error("failed to create glfw window!");
 	}
-
 
 	glfwSetWindowUserPointer(window, this);
 	glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
@@ -45,13 +45,10 @@ App::App()
 
 	cam3d = Camera::FirstPerson(glm::vec3(3.0f, 0.0f, 2.0f));
 	audioManager.Play("audio/test.wav", true, 0.5);
-	finishedDrawSubmit = true;
 }
 
 App::~App()
 {
-	if(submitDraw.joinable())
-		submitDraw.join();
 	delete render;
 	glfwTerminate();
 }
@@ -60,7 +57,6 @@ void App::loadAssets()
 {
 	testModel = render->LoadModel("models/testScene.fbx");
   testTex = render->LoadTexture("textures/error.png");
-  testFont = render->LoadFont("textures/Roboto-Black.ttf");
 	render->EndResourceLoad();
 }
 
@@ -76,8 +72,6 @@ void App::run()
 
 void App::resize(int windowWidth, int windowHeight)
 {
-	if (submitDraw.joinable())
-    submitDraw.join();
 	this->windowWidth = windowWidth;
 	this->windowHeight = windowHeight;
 	if(render != nullptr && windowWidth != 0 && windowHeight != 0)
@@ -143,14 +137,12 @@ render->DrawModel(
 
 render->Begin2DDraw();
 
-render->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,
-										glm::vec4(1), 90.0f);
 
 render->DrawQuad(testTex,
 									glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
 									glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
 
-render->EndDraw(finishedDrawSubmit);
+render->EndDraw();
 
 //submitDraw = std::thread(&Render::EndDraw, render, std::ref(finishedDrawSubmit));
 

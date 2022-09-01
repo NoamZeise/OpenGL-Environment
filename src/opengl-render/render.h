@@ -19,7 +19,7 @@
 #include "resources/resources.h"
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"
-#include "resources/font_loader.h"
+//#include "resources/font_loader.h"
 #include "resources/model_loader.h"
 
 //match in shaders
@@ -45,7 +45,6 @@ public:
 
 	Resource::Texture LoadTexture(std::string filepath);
   Resource::Model LoadModel(std::string filepath);
-	Resource::Font LoadFont(std::string filepath);
 	void EndResourceLoad() { }
 
   void Begin2DDraw();
@@ -54,10 +53,10 @@ public:
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour, glm::vec4 texOffset);
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour);
 	void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix);
-	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
-  void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour);
-  float MeasureString(Resource::Font font, std::string text, float size);
-  void EndDraw(std::atomic<bool>& submit);
+    //	void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
+    // void DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour);
+    //float MeasureString(Resource::Font font, std::string text, float size);
+  void EndDraw();
 
 	void FramebufferResize();
 
@@ -102,7 +101,7 @@ private:
   VertexData* quad;
 
   Resource::TextureLoader* textureLoader;
-	Resource::FontLoader* fontLoader;
+    //	Resource::FontLoader* fontLoader;
   Resource::ModelLoader* modelLoader;
 
   struct Draw2D

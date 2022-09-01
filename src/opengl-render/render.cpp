@@ -62,7 +62,7 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
 
   textureLoader = new Resource::TextureLoader();
-  fontLoader = new  Resource::FontLoader();
+  //fontLoader = new  Resource::FontLoader();
   modelLoader = new Resource::ModelLoader();
   textureLoader->LoadTexture("textures/error.png");
 
@@ -75,7 +75,7 @@ Render::~Render()
   delete blinnPhongShader;
   delete flatShader;
   delete textureLoader;
-  delete fontLoader;
+  // delete fontLoader;
   delete modelLoader;
 }
 
@@ -89,10 +89,6 @@ Resource::Model Render::LoadModel(std::string filepath)
   return modelLoader->LoadModel(filepath, textureLoader);
 }
 
-Resource::Font Render::LoadFont(std::string filepath)
-{
-  return fontLoader->LoadFont(filepath, textureLoader);
-}
 
 void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov)
 {
@@ -148,7 +144,7 @@ void Render::Begin3DDraw()
   current3DDraw = 0;
 }
 
-void Render::EndDraw(std::atomic<bool>& submit)
+void Render::EndDraw()
 {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -219,7 +215,6 @@ void Render::EndDraw(std::atomic<bool>& submit)
   }
 
   glfwSwapBuffers(window);
-  submit = true;
 }
 
 void Render::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour)
@@ -280,21 +275,6 @@ void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec
 void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix)
 {
   DrawQuad(texture, modelMatrix, glm::vec4(1), glm::vec4(0, 0, 1, 1));
-}
-
-void Render::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
-{
-  auto draws = fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
-
-  for(const auto &draw: draws)
-  {
-    DrawQuad(draw.tex, draw.model, draw.colour);
-  }
-}
-
-float Render::MeasureString(Resource::Font font, std::string text, float size)
-{
-  return fontLoader->MeasureString(font, text, size);
 }
 
 void Render::FramebufferResize()

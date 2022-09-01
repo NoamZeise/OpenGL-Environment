@@ -3,7 +3,6 @@
 
 #include <atomic>
 #include <iostream>
-#include <thread>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
@@ -61,9 +60,6 @@ private:
 	Timer timer;
 	Camera::FirstPerson cam3d;
 	Audio::Manager audioManager;
-
-	std::thread submitDraw;
-	std::atomic<bool> finishedDrawSubmit;
 
 	Resource::Model testModel;
   Resource::Texture testTex;

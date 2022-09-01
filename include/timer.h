@@ -3,7 +3,7 @@
 
 #include <chrono>
 
-#ifdef _WIN32
+/*#ifdef _WIN32
 
 class Timer
 {
@@ -31,7 +31,7 @@ private:
 	std::chrono::steady_clock::time_point currentUpdate;
 };
 
-#else
+#else*/
 
 class Timer
 {
@@ -62,4 +62,4 @@ private:
 #endif
 
 
-#endif
+//#endif

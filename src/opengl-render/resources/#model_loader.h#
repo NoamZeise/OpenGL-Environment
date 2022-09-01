@@ -27,7 +27,7 @@ public:
 	void DrawModelInstanced(Model model, TextureLoader* texLoader, int count);
 
 private:
-	struct Mesh
+	struct Meshgit 
 	{
 		VertexData* vertexData;
 		Texture texture;
