@@ -1,6 +1,4 @@
 #include "app.h"
-#include <GLFW/glfw3.h>
-
 
 App::App()
 {
@@ -124,14 +122,14 @@ void App::postUpdate()
 	previousInput = input;
 	input.offset = 0;
 	timer.Update();
-	render->set3DViewMatrixAndFov(cam3d.getViewMatrix(), cam3d.getZoom());
+	render->set3DViewMatrixAndFov(cam3d.getViewMatrix(), cam3d.getZoom(), glm::vec4(cam3d.getPos(), 1.0f));
 }
 
 
 void App::draw()
 {
 #ifdef TIME_APP_DRAW_UPDATE
-	auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::high_resolution_clock::now();
 #endif
 
 

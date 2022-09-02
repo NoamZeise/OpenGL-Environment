@@ -10,7 +10,7 @@
 
 #include <glad/glad.h>
 
-#include "../config.h"
+#include <config.h>
 
 namespace Resource
 {

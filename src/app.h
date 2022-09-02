@@ -17,7 +17,7 @@
 
 #include "opengl-render/render.h"
 #include "opengl-render/resources/resources.h"
-#include "opengl-render/config.h"
+#include <config.h>
 #include "camera.h"
 
 //#define TIME_APP_DRAW_UPDATE
