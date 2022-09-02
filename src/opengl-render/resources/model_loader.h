@@ -1,7 +1,7 @@
 #ifndef MODEL_LOADER_H
 #define MODEL_LOADER_H
 
-#define NO_ASSIMP
+//#define NO_ASSIMP
 
 #ifndef NO_ASSIMP
 #include <assimp/Importer.hpp>

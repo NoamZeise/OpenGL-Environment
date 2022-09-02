@@ -45,7 +45,7 @@ if(UNIX)
 		target_include_directories(${ProjectName} PUBLIC ${Include_Unix})	
     		target_link_libraries(${ProjectName} ${Lib_Unix}libglfw3dll.a
                                          ${Lib_Unix}libfreetype.dll.a
-                                         ${Lib_Unix}assimp-vc140-mt.lib
+                                         ${Lib_Unix}libassimp.dll.a
                                          ${Lib_Unix}portaudio_x64.lib
                                          ${Lib_Unix}sndfile.lib
 					 )

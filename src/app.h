@@ -63,6 +63,7 @@ private:
 
         Resource::Texture testTex;
     Resource::Font testFont;
+    Resource::Model testModel;
 };
 
 #endif
