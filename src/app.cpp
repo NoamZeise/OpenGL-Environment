@@ -55,7 +55,7 @@ App::~App()
 
 void App::loadAssets()
 {
-	testModel = render->LoadModel("models/testScene.fbx");
+    //	testModel = render->LoadModel("models/testScene.fbx");
   testTex = render->LoadTexture("textures/error.png");
 	render->EndResourceLoad();
 }
