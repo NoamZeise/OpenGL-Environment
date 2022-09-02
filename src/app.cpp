@@ -10,6 +10,7 @@ App::App()
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit())
 		throw std::runtime_error("failed to initialise glfw!");
+	
 
 	Render::SetGLFWWindowHints();
 

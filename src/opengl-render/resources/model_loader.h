@@ -47,9 +47,9 @@ private:
 	};
 
 #ifndef NO_ASSIMP
-  void processNode(LoadedModel* model, aiNode* node, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 parentTransform);
-	void processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 transform);
-	void loadMaterials(Mesh* mesh, aiMaterial* material, TextureLoader* texLoader);
+    void processNode(LoadedModel* model, aiNode* node, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 parentTransform);
+    void processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, TextureLoader* texLoader, aiMatrix4x4 transform);
+    void loadMaterials(Mesh* mesh, aiMaterial* material, TextureLoader* texLoader);
 #endif
 
 	std::vector<LoadedModel*> loadedModels;
