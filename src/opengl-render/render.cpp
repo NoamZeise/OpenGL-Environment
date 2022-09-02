@@ -62,7 +62,7 @@ Render::Render(GLFWwindow *window, glm::vec2 target)
   glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
 
   textureLoader = new Resource::TextureLoader();
-  //fontLoader = new  Resource::FontLoader();
+  fontLoader = new  Resource::FontLoader();
   modelLoader = new Resource::ModelLoader();
   textureLoader->LoadTexture("textures/error.png");
 
@@ -75,7 +75,7 @@ Render::~Render()
   delete blinnPhongShader;
   delete flatShader;
   delete textureLoader;
-  // delete fontLoader;
+  delete fontLoader;
   delete modelLoader;
 }
 
@@ -89,6 +89,10 @@ Resource::Model Render::LoadModel(std::string filepath)
   return modelLoader->LoadModel(filepath, textureLoader);
 }
 
+Resource::Font Render::LoadFont(std::string filepath)
+{
+  return fontLoader->LoadFont(filepath, textureLoader);
+}
 
 void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov)
 {
@@ -96,26 +100,6 @@ void Render::set3DViewMatrixAndFov(glm::mat4 view, float fov)
   view3D = view;
   proj3D = glm::perspective(glm::radians(fov),
 			((float)width) / ((float)height), 0.1f, 500.0f);
-}
-
-void Render::set2DViewMatrixAndScale(glm::mat4 view, float scale)
-{
-  this->view2D = view;
-  this->scale = scale;
-
-  float deviceRatio = (float)width / (float)height;
-  float virtualRatio = targetResolution.x / targetResolution.y;
-  float xCorrection = width / targetResolution.x;
-  float yCorrection = height / targetResolution.y;
-
-  float correction;
-  if (virtualRatio < deviceRatio) {
-    correction = yCorrection;
-  } else {
-    correction = xCorrection;
-  }
-  proj2D = glm::ortho(
-      0.0f, (float)width*scale / correction, (float)height*scale / correction, 0.0f, -10.0f, 10.0f);
 }
 
 Render::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset)
@@ -277,11 +261,35 @@ void Render::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix)
   DrawQuad(texture, modelMatrix, glm::vec4(1), glm::vec4(0, 0, 1, 1));
 }
 
+void Render::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
+{
+  auto draws = fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
+
+  for(const auto &draw: draws)
+  {
+    DrawQuad(draw.tex, draw.model, draw.colour);
+  }
+}
+
 void Render::FramebufferResize()
 {
   glfwGetWindowSize(window, &this->width, &this->height);
   glViewport(0, 0, width, height);
 
+  float deviceRatio = (float)width /
+                  (float)height;
+  float virtualRatio = targetResolution.x / targetResolution.y;
+  float xCorrection = width / targetResolution.x;
+  float yCorrection = height / targetResolution.y;
+
+  float correction;
+  if (virtualRatio < deviceRatio) {
+    correction = yCorrection;
+  } else {
+    correction = xCorrection;
+  }
+  proj2D = glm::ortho(
+      0.0f, (float)width / correction, (float)height / correction, 0.0f, -10.0f, 10.0f);
+
   set3DViewMatrixAndFov(view3D, fov);
-  set2DViewMatrixAndScale(view2D, scale);
 }

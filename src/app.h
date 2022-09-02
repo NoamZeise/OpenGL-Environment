@@ -62,6 +62,7 @@ private:
 	Audio::Manager audioManager;
 
         Resource::Texture testTex;
+    Resource::Font testFont;
 };
 
 #endif

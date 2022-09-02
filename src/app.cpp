@@ -57,7 +57,8 @@ void App::loadAssets()
 {
     //	testModel = render->LoadModel("models/testScene.fbx");
   testTex = render->LoadTexture("textures/error.png");
-	render->EndResourceLoad();
+  testFont = render->LoadFont("textures/Roboto-Black.ttf");
+  render->EndResourceLoad();
 }
 
 void App::run()
@@ -135,6 +136,10 @@ render->Begin2DDraw();
 render->DrawQuad(testTex,
 									glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
 									glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
+
+
+render->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,
+										glm::vec4(1), 0.0f);
 
 render->EndDraw();
 

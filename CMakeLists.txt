@@ -15,9 +15,8 @@ project(${ProjectName} VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 14)
 
-message("${CMAKE_CXX_COMPILER}")
 #packages
-if(CMAKE_CXX_COMPILER EQUAL "usr//bin//g++")
+if(NOT MINGW)
     find_package(glfw3 3.3 REQUIRED)
     find_package(Freetype REQUIRED)
 endif()
@@ -34,7 +33,7 @@ add_executable(${ProjectName}   ${SOURCES}
 #link
 target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
-	if(CMAKE_C_COMPILER EQUAL "usr/bin/g++")
+	if(NOT MINGW)
     			    target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
     			    target_link_libraries(${ProjectName} glfw
                                          assimp
@@ -45,8 +44,8 @@ if(UNIX)
     else()
 		target_include_directories(${ProjectName} PUBLIC ${Include_Unix})	
     		target_link_libraries(${ProjectName} ${Lib_Unix}libglfw3dll.a
-                                         ${Lib_Unix}freetype.lib
-      #                                   ${Lib_Unix}assimp-vc140-mt.lib
+                                         ${Lib_Unix}libfreetype.dll.a
+                                         ${Lib_Unix}assimp-vc140-mt.lib
                                          ${Lib_Unix}portaudio_x64.lib
                                          ${Lib_Unix}sndfile.lib
 					 )
