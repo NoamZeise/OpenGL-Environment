@@ -15,10 +15,11 @@ project(${ProjectName} VERSION 1.0)
 
 set(CMAKE_CXX_STANDARD 14)
 
+message("${CMAKE_CXX_COMPILER}")
 #packages
-if(UNIX)
- #   find_package(glfw3 3.3 REQUIRED)
- #   find_package(Freetype REQUIRED)
+if(CMAKE_CXX_COMPILER EQUAL "usr//bin//g++")
+    find_package(glfw3 3.3 REQUIRED)
+    find_package(Freetype REQUIRED)
 endif()
 
 #add executables
@@ -33,20 +34,23 @@ add_executable(${ProjectName}   ${SOURCES}
 #link
 target_include_directories(${ProjectName} PUBLIC include/)
 if(UNIX)
-    #target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
-    #target_link_libraries(${ProjectName} glfw
-    #                                     assimp
-    #                                     ${FREETYPE_LIBRARIES}
-    #                                     sndfile
-    #                                     portaudio
-    #                                     ${CMAKE_DL_LIBS})
-	target_include_directories(${ProjectName} PUBLIC ${Include_Unix})	
-    	target_link_libraries(${ProjectName} ${Lib_Unix}libglfw3dll.a
+	if(CMAKE_C_COMPILER EQUAL "usr/bin/g++")
+    			    target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
+    			    target_link_libraries(${ProjectName} glfw
+                                         assimp
+                                         ${FREETYPE_LIBRARIES}
+                                         sndfile
+                                         portaudio
+                                         ${CMAKE_DL_LIBS})
+    else()
+		target_include_directories(${ProjectName} PUBLIC ${Include_Unix})	
+    		target_link_libraries(${ProjectName} ${Lib_Unix}libglfw3dll.a
                                          ${Lib_Unix}freetype.lib
       #                                   ${Lib_Unix}assimp-vc140-mt.lib
                                          ${Lib_Unix}portaudio_x64.lib
                                          ${Lib_Unix}sndfile.lib
 					 )
+    endif()					 
 elseif(MSVC)
     target_include_directories(${ProjectName} PUBLIC ${Include})
     target_link_libraries(${ProjectName} ${Lib}glfw3.lib

@@ -61,9 +61,7 @@ private:
 	Camera::FirstPerson cam3d;
 	Audio::Manager audioManager;
 
-	Resource::Model testModel;
-  Resource::Texture testTex;
-  Resource::Font testFont;
+        Resource::Texture testTex;
 };
 
 #endif

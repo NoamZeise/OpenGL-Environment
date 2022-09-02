@@ -104,8 +104,6 @@ void App::update()
 		glfwSetWindowShouldClose(window, GLFW_TRUE);
 	}
 
-	cam3d.update(input, previousInput, timer);
-
 	postUpdate();
 #ifdef TIME_APP_DRAW_UPDATE
 	auto stop = std::chrono::high_resolution_clock::now();
@@ -130,10 +128,6 @@ void App::draw()
 #ifdef TIME_APP_DRAW_UPDATE
 	auto start = std::chrono::high_resolution_clock::now();
 #endif
-
-render->DrawModel(
-			testModel, glm::translate(glm::mat4(1.0f), glm::vec3(0*10, 0*10, 0)),
-			glm::inverseTranspose(cam3d.getViewMatrix() * glm::mat4(1.0f)));
 
 render->Begin2DDraw();
 
