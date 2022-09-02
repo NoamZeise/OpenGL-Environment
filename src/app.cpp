@@ -58,7 +58,6 @@ void App::loadAssets()
   testTex = render->LoadTexture("textures/error.png");
   testFont = render->LoadFont("textures/Roboto-Black.ttf");
   testModel = render->LoadModel("models/testScene.fbx");
-  render->EndResourceLoad();
 }
 
 void App::run()
@@ -132,25 +131,22 @@ void App::draw()
     auto start = std::chrono::high_resolution_clock::now();
 #endif
 
+    render->BeginDraw();
 
-	render->DrawModel(
-			testModel, glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0)),
-			glm::inverseTranspose(cam3d.getViewMatrix() * glm::mat4(1.0f)));
-
-render->Begin2DDraw();
-
-
-render->DrawQuad(testTex,
-									glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
-									glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
-
-
-render->DrawString(testFont, "test", glm::vec2(400, 100), 100, -0.5,
-										glm::vec4(1), 0.0f);
-
-render->EndDraw();
-
-//submitDraw = std::thread(&Render::EndDraw, render, std::ref(finishedDrawSubmit));
+    render->DrawModel(
+		      testModel, glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 0)),
+		      glm::inverseTranspose(cam3d.getViewMatrix() * glm::mat4(1.0f)));
+    
+    
+    render->DrawQuad(testTex,
+		     glmhelper::getModelMatrix(glm::vec4(0, 0, 400, 400), 0, 0),
+		     glm::vec4(1, 0, 1, 0.3), glm::vec4(0, 0, 1, 1));
+    
+    
+    render->DrawString(testFont, "testing OGL renderer", glm::vec2(400, 100), 100, -0.5,
+		       glm::vec4(1), 0.0f);
+    
+    render->EndDraw();
 
 #ifdef TIME_APP_DRAW_UPDATE
 	auto stop = std::chrono::high_resolution_clock::now();
@@ -163,17 +159,17 @@ render->EndDraw();
 
 glm::vec2 App::correctedPos(glm::vec2 pos)
 {
-  if (settings::USE_TARGET_RESOLUTION)
-    return glm::vec2(
-        pos.x * ((float)settings::TARGET_WIDTH / (float)windowWidth),
-        pos.y * ((float)settings::TARGET_HEIGHT / (float)windowHeight));
-
-  return glm::vec2(pos.x, pos.y);
+    if (settings::USE_TARGET_RESOLUTION)
+	return glm::vec2(
+			 pos.x * ((float)settings::TARGET_WIDTH / (float)windowWidth),
+			 pos.y * ((float)settings::TARGET_HEIGHT / (float)windowHeight));
+    
+    return glm::vec2(pos.x, pos.y);
 }
 
 glm::vec2 App::correctedMouse()
 {
-  return correctedPos(glm::vec2(input.X, input.Y));
+    return correctedPos(glm::vec2(input.X, input.Y));
 }
 
 /*
@@ -182,53 +178,53 @@ glm::vec2 App::correctedMouse()
 
 void App::framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
-	auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
-	app->resize(width, height);
+    auto app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
+    app->resize(width, height);
 }
 
 void App::mouse_callback(GLFWwindow* window, double xpos, double ypos)
 {
-	App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
-	app->input.X = xpos;
-	app->input.Y = ypos;
+    App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
+    app->input.X = xpos;
+    app->input.Y = ypos;
 }
 void App::scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
-	app->input.offset = yoffset;
+    App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
+    app->input.offset = yoffset;
 }
 
 void App::key_callback(GLFWwindow* window, int key, int scancode, int action, int mode)
 {
-	App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
-	if (key >= 0 && key < 1024)
+    App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
+    if (key >= 0 && key < 1024)
+    {
+	if (action == GLFW_PRESS)
 	{
-		if (action == GLFW_PRESS)
-		{
-			app->input.Keys[key] = true;
-		}
-		else if (action == GLFW_RELEASE)
-		{
-			app->input.Keys[key] = false;
-		}
+	    app->input.Keys[key] = true;
 	}
+	else if (action == GLFW_RELEASE)
+	{
+	    app->input.Keys[key] = false;
+	}
+    }
 }
 
 void App::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
-	App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
-
-	if (button >= 0 && button < 8)
+    App* app = reinterpret_cast<App*>(glfwGetWindowUserPointer(window));
+    
+    if (button >= 0 && button < 8)
+    {
+	if (action == GLFW_PRESS)
 	{
-		if (action == GLFW_PRESS)
-		{
-			app->input.Buttons[button] = true;
-		}
-		else if (action == GLFW_RELEASE)
-		{
-			app->input.Buttons[button] = false;
-		}
+	    app->input.Buttons[button] = true;
 	}
+	else if (action == GLFW_RELEASE)
+	{
+	    app->input.Buttons[button] = false;
+	}
+    }
 }
 
 void App::error_callback(int error, const char* description)

@@ -119,13 +119,9 @@ Render::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 n
 }
 
 
-void Render::Begin2DDraw()
+void Render::BeginDraw()
 {
   current2DDraw = 0;
-}
-
-void Render::Begin3DDraw()
-{
   current3DDraw = 0;
 }
 
@@ -133,70 +129,73 @@ void Render::EndDraw()
 {
   glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-//Draw 2D
-
-  flatShader->Use();
-
-  glUniformMatrix4fv(flatShader->Location("projection"), 1, GL_FALSE, &proj2D[0][0]);
-  glUniformMatrix4fv(flatShader->Location("view"), 1, GL_FALSE, &view2D[0][0]);
-  glUniform1i(flatShader->Location("enableTex"), GL_TRUE);
-
-  Resource::Texture currentTexture;
-  glm::vec4 currentColour;
-
   int drawCount = 0;
-  for(unsigned int i = 0; i < current2DDraw; i++)
+//Draw 2D
+  if(current2DDraw > 0)
   {
-    if((currentTexture.ID != draw2DCalls[i].tex.ID || currentColour != draw2DCalls[i].colour) && drawCount > 0)
-    {
-      draw2DBatch(drawCount, currentTexture, currentColour);
-      drawCount = 0;
-    }
-    currentTexture = draw2DCalls[i].tex;
-    currentColour = draw2DCalls[i].colour;
-    perInstance2DModel[drawCount] = draw2DCalls[i].model;
-    perInstance2DTexOffset[drawCount] = draw2DCalls[i].texOffset;
+      flatShader->Use();
 
-    drawCount++;
-  }
-  if(drawCount != 0)
-  {
-    draw2DBatch(drawCount, currentTexture, currentColour);
+      glUniformMatrix4fv(flatShader->Location("projection"), 1, GL_FALSE, &proj2D[0][0]);
+      glUniformMatrix4fv(flatShader->Location("view"), 1, GL_FALSE, &view2D[0][0]);
+      glUniform1i(flatShader->Location("enableTex"), GL_TRUE);
+      
+      Resource::Texture currentTexture;
+      glm::vec4 currentColour;
+      
+      for(unsigned int i = 0; i < current2DDraw; i++)
+      {
+	  if((currentTexture.ID != draw2DCalls[i].tex.ID || currentColour != draw2DCalls[i].colour) && drawCount > 0)
+	  {
+	      draw2DBatch(drawCount, currentTexture, currentColour);
+	      drawCount = 0;
+	  }
+	  currentTexture = draw2DCalls[i].tex;
+	  currentColour = draw2DCalls[i].colour;
+	  perInstance2DModel[drawCount] = draw2DCalls[i].model;
+	  perInstance2DTexOffset[drawCount] = draw2DCalls[i].texOffset;
+	  
+	  drawCount++;
+      }
+      if(drawCount != 0)
+      {
+	  draw2DBatch(drawCount, currentTexture, currentColour);
+      }
   }
 
 //Draw 3D
-
-  blinnPhongShader->Use();
-  glUniformMatrix4fv(blinnPhongShader->Location("projection"), 1, GL_FALSE, &proj3D[0][0]);
-  glUniformMatrix4fv(blinnPhongShader->Location("view"), 1, GL_FALSE, &view3D[0][0]);
-  
-  glUniform4fv(blinnPhongShader->Location("lighting.ambient"), 1, &lighting.ambient[0]);
-  glUniform4fv(blinnPhongShader->Location("lighting.diffuse"), 1, &lighting.diffuse[0]);
-  glUniform4fv(blinnPhongShader->Location("lighting.specular"), 1, &lighting.specular[0]);
-  glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.direction[0]);
-  glUniform4fv(blinnPhongShader->Location("lighting.camPos"), 1, &lighting.camPos[0]);
-  glm::vec4 colourWhite = glm::vec4(1);
-  glUniform4fv(blinnPhongShader->Location("spriteColour"), 1, &colourWhite[0]);
-  glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
-
-  Resource::Model currentModel;
-  drawCount = 0;
-  for(unsigned int i = 0; i < current3DDraw; i++)
+  if(current3DDraw > 0)
   {
-    if((currentModel.ID != draw3DCalls[i].model.ID && drawCount > 0) || drawCount >= MAX_3D_DRAWS)
-    {
-      draw3DBatch(drawCount, currentModel);
+      blinnPhongShader->Use();
+      glUniformMatrix4fv(blinnPhongShader->Location("projection"), 1, GL_FALSE, &proj3D[0][0]);
+      glUniformMatrix4fv(blinnPhongShader->Location("view"), 1, GL_FALSE, &view3D[0][0]);
+      
+      glUniform4fv(blinnPhongShader->Location("lighting.ambient"), 1, &lighting.ambient[0]);
+      glUniform4fv(blinnPhongShader->Location("lighting.diffuse"), 1, &lighting.diffuse[0]);
+      glUniform4fv(blinnPhongShader->Location("lighting.specular"), 1, &lighting.specular[0]);
+      glUniform4fv(blinnPhongShader->Location("lighting.direction"), 1, &lighting.direction[0]);
+      glUniform4fv(blinnPhongShader->Location("lighting.camPos"), 1, &lighting.camPos[0]);
+      glm::vec4 colourWhite = glm::vec4(1);
+      glUniform4fv(blinnPhongShader->Location("spriteColour"), 1, &colourWhite[0]);
+      glUniform1i(blinnPhongShader->Location("enableTex"), GL_TRUE);
+      
+      Resource::Model currentModel;
       drawCount = 0;
-    }
-    currentModel = draw3DCalls[i].model;
-    perInstance3DModel[drawCount] = draw3DCalls[i].modelMatrix;
-    perInstance3DNormal[drawCount] = draw3DCalls[i].normalMatrix;
-    drawCount++;
-  }
-  if(drawCount != 0)
-  {
-    draw3DBatch(drawCount, currentModel);
+      for(unsigned int i = 0; i < current3DDraw; i++)
+      {
+	  if((currentModel.ID != draw3DCalls[i].model.ID && drawCount > 0) || drawCount >= MAX_3D_DRAWS)
+	  {
+	      draw3DBatch(drawCount, currentModel);
+	      drawCount = 0;
+	  }
+	  currentModel = draw3DCalls[i].model;
+	  perInstance3DModel[drawCount] = draw3DCalls[i].modelMatrix;
+	  perInstance3DNormal[drawCount] = draw3DCalls[i].normalMatrix;
+	  drawCount++;
+      }
+      if(drawCount != 0)
+      {
+	  draw3DBatch(drawCount, currentModel);
+      }
   }
 
   glfwSwapBuffers(window);
