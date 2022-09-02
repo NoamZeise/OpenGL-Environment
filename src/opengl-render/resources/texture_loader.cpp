@@ -8,66 +8,62 @@ namespace Resource
 #ifndef NDEBUG
 		std::cout << "loading texture: " << path << std::endl;
 #endif
-	ID = 0;
-	width = 0;
-	height = 0;
-	//stbi_set_flip_vertically_on_load(true);
-	int nrChannels;
-	unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
-	if (!data)
-	{
-		std::cerr << "failed to load texture at " << path << std::endl;
-		return;
-	}
+		ID = 0;
+		width = 0;
+		height = 0;
+		int nrChannels;
+		unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+		if (!data)
+		{
+			std::cerr << "failed to load texture at " << path << std::endl;
+			return;
+		}
 
-	unsigned int format = GL_RGBA;
-	if (nrChannels == 1)
-		format = GL_RED;
-	else if (nrChannels == 3)
-		format = GL_RGB;
-	else if(nrChannels == 4)
-		format = GL_RGBA;
-	else
-	{
+		generateTexture(data, width, height, nrChannels);
+
 		stbi_image_free(data);
-		std::cerr << "failed to load texture at " << path << " unsupported num of channels!" << std::endl;
-		return;
-	}
-	glGenTextures(1, &ID);
-	glBindTexture(GL_TEXTURE_2D, ID);
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-	glGenerateMipmap(GL_TEXTURE_2D);
-
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	stbi_image_free(data);
 	}
 
 	TextureLoader::LoadedTex::LoadedTex(unsigned char* data, int width, int height, int nrChannels)
 	{
-			unsigned int format = GL_RGBA;
-			if (nrChannels == 1)
-				format = GL_RED;
-			else if (nrChannels == 3)
-				format = GL_RGB;
-			else if(nrChannels == 4)
-				format = GL_RGBA;
-			else
-			{
-				std::cerr << "failed to load character texture from font, unsupported num of channels!" << std::endl;
-				return;
-			}
-			glGenTextures(1, &ID);
-			glBindTexture(GL_TEXTURE_2D, ID);
-			glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		generateTexture(data, width, height, nrChannels);
+	}
+
+	void TextureLoader::LoadedTex::generateTexture(unsigned char* data, int width, int height, int nrChannels)
+	{
+		unsigned int format = GL_RGBA;
+		if (nrChannels == 1)
+			format = GL_RED;
+		else if (nrChannels == 3)
+			format = GL_RGB;
+		else if(nrChannels == 4)
+			format = GL_RGBA;
+		else
+		{
+			std::cerr << "failed to load texture, unsupported num of channels!" << std::endl;
+			return;
+		}
+
+		glGenTextures(1, &ID);
+		glBindTexture(GL_TEXTURE_2D, ID);
+		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		if(settings::MIP_MAPPING)
 			glGenerateMipmap(GL_TEXTURE_2D);
 
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+		if(settings::PIXELATED)
+		{
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST );
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST );
+		}
+		else
+		{
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		}
 	}
 
 	TextureLoader::LoadedTex::~LoadedTex()

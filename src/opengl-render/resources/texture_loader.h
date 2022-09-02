@@ -10,6 +10,8 @@
 
 #include <glad/glad.h>
 
+#include "../config.h"
+
 namespace Resource
 {
 
@@ -32,6 +34,9 @@ struct LoadedTex
 	unsigned int ID;
 	int width;
 	int height;
+
+private:
+	void generateTexture(unsigned char* data, int width, int height, int nrChannels);
 };
 
 	std::vector<LoadedTex*> textures;

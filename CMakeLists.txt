@@ -22,13 +22,12 @@ if(NOT MINGW)
 endif()
 
 #add executables
-file(GLOB SOURCES src/*)
-file(GLOB OGL_RENDER src/opengl-render/*)
-file(GLOB OGL_RENDER_RESOURCES src/opengl-render/resources/*)
-add_executable(${ProjectName}   ${SOURCES}
-                                ${OGL_RENDER}
-                                ${OGL_RENDER_RESOURCES}
-                                ${PROJ_INCLUDE})
+file(GLOB SOURCES src/*
+	  src/opengl-render/*
+	  src/opengl-render/resources/*
+	  )
+list(FILTER SOURCES EXCLUDE REGEX ".*#+")
+add_executable(${ProjectName} ${SOURCES})
 
 #link
 target_include_directories(${ProjectName} PUBLIC include/)

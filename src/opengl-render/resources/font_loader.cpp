@@ -3,7 +3,7 @@
 namespace Resource
 {
 
-  FontLoader::~FontLoader()
+	FontLoader::~FontLoader()
 	{
 		for(unsigned int i = 0; i < fonts.size(); i++)
 		{
@@ -14,10 +14,10 @@ namespace Resource
 	Font FontLoader::LoadFont(std::string file, TextureLoader* texLoader)
 	{
 		fonts.push_back(new LoadedFont(file, texLoader));
-		return Font(fonts.size() - 1);
+		return Font(static_cast<unsigned int>(fonts.size() - 1));
 	}
 
-  std::vector<QuadDraw> FontLoader::DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
+	std::vector<QuadDraw> FontLoader::DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate)
 	{
 		std::vector<QuadDraw> draws;
 		if (drawfont.ID >= fonts.size())
@@ -45,24 +45,25 @@ namespace Resource
 
 				glm::mat4 model = glmhelper::calcMatFromRect(thisPos, rotate, depth);
 
-				draws.push_back(QuadDraw(cTex->texture, model, colour));
+
+				draws.push_back(QuadDraw(cTex->texture, model, colour, cTex->textureOffset));
 			}
 			position.x += cTex->advance * size;
-		}
+		}		//test
+
 		return draws;
 	}
 
-  float FontLoader::MeasureString(Font font, std::string text, float size)
-  {
-    if (font.ID >= fonts.size())
-    {
-      std::cout << "font is out of range" << std::endl;
-      return 0.0f;
-    }
-    return fonts[font.ID]->MeasureString(text, size);
-  }
+	float FontLoader::MeasureString(Font font, std::string text, float size)
+	{
+		if (font.ID >= fonts.size())
+		{
+			std::cout << "font is out of range" << std::endl;
+			return 0.0f;
+		}
+		return fonts[font.ID]->MeasureString(text, size);
+	}
 
-//PRIVATE METHODS
 
 FontLoader::LoadedFont::LoadedFont(std::string file, TextureLoader* texLoader)
 {
@@ -82,21 +83,77 @@ FontLoader::LoadedFont::LoadedFont(std::string file, TextureLoader* texLoader)
 
 	FT_Set_Pixel_Sizes(face, 0, SIZE);
 
+	size_t largestHeight = 0;
+	size_t totalWidth = 0;
 	for (unsigned char c = 32; c < 126; c++)
+	{
 		loadCharacter(texLoader, face, c);
+		totalWidth += face->glyph->bitmap.width;
+		largestHeight = face->glyph->bitmap.rows > largestHeight ? face->glyph->bitmap.rows : largestHeight;
+	}
+
+	unsigned char* finalBuff = new unsigned char[totalWidth * largestHeight * 4];
+	size_t widthOffset = 0;
+	for (unsigned char c = 32; c < 126; c++)
+	{
+		for(size_t x = 0; x < _chars[c].buffW; x++)
+		{
+			for(size_t y = 0; y < largestHeight; y++)
+			{
+				for (size_t byte = 0; byte < 4; byte++)
+				{
+					if(y < _chars[c].buffH)
+					{
+						finalBuff
+							[(totalWidth*4*y) + (widthOffset*4) + (x * 4) + byte]
+							= _chars[c].buffer
+							[_chars[c].buffW * y + x];
+					}
+					else
+					{
+						finalBuff[(totalWidth*4*y) + (widthOffset*4) + (x * 4) + byte] = 0x00;
+					}
+				}
+			}
+		}
+		delete[] _chars[c].buffer;
+		_chars[c].buffer = nullptr;
+		_chars[c].textureOffset  = glmhelper::getTextureOffset(
+			glm::vec2(totalWidth, largestHeight),
+			glm::vec4(widthOffset, 0, _chars[c].buffW, _chars[c].buffH)
+		);
+		widthOffset += _chars[c].buffW;
+	}
+
+	Resource::Texture texture = texLoader->LoadTexture(
+		finalBuff,
+		static_cast<int>(totalWidth),
+		static_cast<int>(largestHeight),
+		4
+    );
+
+	for (unsigned char c = 32; c < 126; c++)
+	{
+		_chars[c].texture = texture;
+	}
 
 	FT_Done_Face(face);
 	FT_Done_FreeType(ftlib);
 }
 
-FontLoader::LoadedFont::~LoadedFont()
+FontLoader::Character FontLoader::LoadedFont::blankChar(const FT_Face &face)
 {
-	std::map<char, Character*>::iterator it;
-	for (it = _chars.begin(); it != _chars.end(); it++)
-	{
-		delete it->second;
-		it->second = nullptr;
-	}
+	return makeChar(nullptr, face);
+}
+
+FontLoader::Character FontLoader::LoadedFont::makeChar(unsigned char* buffer, const FT_Face &face)
+{
+	return Character(
+			buffer, face->glyph->bitmap.width, face->glyph->bitmap.rows,
+			glm::vec2(face->glyph->bitmap.width / (double)SIZE, face->glyph->bitmap.rows / (double)SIZE),
+			glm::vec2(face->glyph->bitmap_left / (double)SIZE, face->glyph->bitmap_top / (double)SIZE),
+			static_cast<float>((face->glyph->advance.x >> 6) / (double)SIZE)
+	);
 }
 
 bool FontLoader::LoadedFont::loadCharacter(TextureLoader* textureLoader, FT_Face face, char c)
@@ -104,68 +161,28 @@ bool FontLoader::LoadedFont::loadCharacter(TextureLoader* textureLoader, FT_Face
 	if (FT_Load_Char(face, c, FT_LOAD_RENDER))
 	{
 		std::cout << "error loading " << c << std::endl;
-		_chars.insert(std::pair<char, Character*>(c, new Character(
-			Resource::Texture(0, glm::vec2(0, 0), "NULL"),
-			glm::vec2(face->glyph->bitmap.width / (double)SIZE, face->glyph->bitmap.rows / (double)SIZE),
-			glm::vec2(face->glyph->bitmap_left / (double)SIZE, face->glyph->bitmap_top / (double)SIZE),
-			(face->glyph->advance.x >> 6) / (double)SIZE
-		)));
+		_chars.insert(std::pair<char, Character>(c, blankChar(face)));
 		return true;
 	}
 	if (face->glyph->bitmap.width == 0)
 	{
-		_chars.insert(std::pair<char, Character*>(c, new Character(
-			Resource::Texture(0, glm::vec2(0, 0), "NULL"),
-			glm::vec2(face->glyph->bitmap.width / (double)SIZE, face->glyph->bitmap.rows / (double)SIZE),
-			glm::vec2(face->glyph->bitmap_left / (double)SIZE, face->glyph->bitmap_top / (double)SIZE),
-			(face->glyph->advance.x >> 6) / (double)SIZE
-		)));
+		_chars.insert(std::pair<char, Character>(c, blankChar(face)));
 		return true;
 	}
 
-	unsigned char* buffer = new unsigned char[face->glyph->bitmap.width * face->glyph->bitmap.rows * 4];
+	unsigned char* buffer = new unsigned char[face->glyph->bitmap.width * face->glyph->bitmap.rows];
 
-	int buffIndex = 0;
-	char blank = 0x00;
 	for (size_t i = 0; i < face->glyph->bitmap.width * face->glyph->bitmap.rows; i++)
-	{
+		buffer[i] = face->glyph->bitmap.buffer[i];
 
-#ifdef _MSC_VER
-		//std::cout << (int)((face->glyph->bitmap.buffer + i)[0]) << std::endl;
-		std::memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-		std::memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-		std::memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-		std::memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-		if((char)((face->glyph->bitmap.buffer + i)[0])  != (char)0xFF)
-			std::memcpy(buffer + buffIndex - 1, &blank, 1);
-#else
-  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-  memcpy(buffer + buffIndex++, face->glyph->bitmap.buffer + i, 1);
-  if((char)((face->glyph->bitmap.buffer + i)[0])  != (char)0xFF)
-    memcpy(buffer + buffIndex - 1, &blank, 1);
-#endif
-	}
-
-	Resource::Texture texture = textureLoader->LoadTexture(
-		buffer, face->glyph->bitmap.width, face->glyph->bitmap.rows, 4);
-
-
-	_chars.insert(std::pair<char, Character*>(c, new Character(
-		texture,
-		glm::vec2(face->glyph->bitmap.width / (double)SIZE, face->glyph->bitmap.rows / (double)SIZE),
-		glm::vec2(face->glyph->bitmap_left / (double)SIZE, face->glyph->bitmap_top / (double)SIZE),
-		(face->glyph->advance.x >> 6) / (double)SIZE
-	)));
-
+	_chars.insert(std::pair<char, Character>(c, makeChar(buffer, face)));
 
 	return true;
 }
 
 FontLoader::Character* FontLoader::LoadedFont::getChar(char c)
 {
-	return _chars[c];
+	return &_chars[c];
 }
 
 float FontLoader::LoadedFont::MeasureString(std::string text, float size)
@@ -182,3 +199,4 @@ float FontLoader::LoadedFont::MeasureString(std::string text, float size)
 }
 
 }
+//end

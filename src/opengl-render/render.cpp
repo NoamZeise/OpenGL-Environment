@@ -267,7 +267,7 @@ void Render::DrawString(Resource::Font font, std::string text, glm::vec2 positio
 
   for(const auto &draw: draws)
   {
-    DrawQuad(draw.tex, draw.model, draw.colour);
+      DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
   }
 }
 

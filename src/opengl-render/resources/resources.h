@@ -41,19 +41,21 @@ namespace Resource {
     }
     unsigned int ID;
   };
-
-  struct QuadDraw
-  {
-	  QuadDraw(Texture tex, glm::mat4 model, glm::vec4 colour)
-	  {
-		  this->tex = tex;
-		  this->model = model;
-		  this->colour = colour;
-	  }
-	  Texture tex;
-	  glm::mat4 model;
-	  glm::vec4 colour;
-  };
+    
+struct QuadDraw
+{
+	QuadDraw(Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset)
+	{
+		this->tex = tex;
+		this->model = model;
+		this->colour = colour;
+		this->texOffset = texOffset;
+	}
+	Texture tex;
+	glm::mat4 model;
+	glm::vec4 colour;
+	glm::vec4 texOffset;
+};
 
 }
 
