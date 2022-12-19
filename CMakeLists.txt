@@ -1,59 +1,12 @@
 cmake_minimum_required(VERSION 3.10)
 
-set(ProjectName "OpenGL-Environment")
+set(OpenGL-Environment-Proj "OpenGL-Environment")
 
-#windows only
-set(Lib "D:/noam4/Libraries/VS/lib/x64/")
-set(Include "D:/noam4/Libraries/VS/include")
-set(Lib_Unix "/home/noam/Documents/windows-graphics-libs/lib/")
-set(Include_Unix "/home/noam/Documents/windows-graphics-libs/include/")
+project(${OpenGL-Environment-Proj} VERSION 1.0)
 
-set(CMAKE_EXPORT_COMPILE_COMMANDS 1)
-
-# set the project name
-project(${ProjectName} VERSION 1.0)
-
-set(CMAKE_CXX_STANDARD 14)
-
-#packages
-if(NOT MINGW)
+if(UNIX)
     find_package(glfw3 3.3 REQUIRED)
     find_package(Freetype REQUIRED)
 endif()
 
-#add executables
-file(GLOB SOURCES src/*
-	  src/opengl-render/*
-	  src/opengl-render/resources/*
-	  )
-list(FILTER SOURCES EXCLUDE REGEX ".*#+")
-add_executable(${ProjectName} ${SOURCES})
-
-#link
-target_include_directories(${ProjectName} PUBLIC include/)
-if(UNIX)
-	if(NOT MINGW)
-    			    target_include_directories(${ProjectName} PUBLIC ${FREETYPE_INCLUDE_DIRS})
-    			    target_link_libraries(${ProjectName} glfw
-                                         assimp
-                                         ${FREETYPE_LIBRARIES}
-                                         sndfile
-                                         portaudio
-                                         ${CMAKE_DL_LIBS})
-    else()
-		target_include_directories(${ProjectName} PUBLIC ${Include_Unix})	
-    		target_link_libraries(${ProjectName} ${Lib_Unix}libglfw3dll.a
-                                         ${Lib_Unix}libfreetype.dll.a
-                                         ${Lib_Unix}libassimp.dll.a
-                                         ${Lib_Unix}portaudio_x64.lib
-                                         ${Lib_Unix}sndfile.lib
-					 )
-    endif()					 
-elseif(MSVC)
-    target_include_directories(${ProjectName} PUBLIC ${Include})
-    target_link_libraries(${ProjectName} ${Lib}glfw3.lib
-                                         ${Lib}freetype.lib
-                                         ${Lib}assimp-vc140-mt.lib
-                                         ${Lib}portaudio_x64.lib
-                                         ${Lib}sndfile.lib)
-endif()
+add_subdirectory(src)
