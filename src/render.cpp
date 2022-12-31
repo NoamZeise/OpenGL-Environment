@@ -59,10 +59,7 @@ GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
   glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DTexOffset), &perInstance2DTexOffset, GL_DYNAMIC_DRAW);
   glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
 
-  textureLoader = new Resource::GLTextureLoader();
-  fontLoader = new  Resource::GLFontLoader();
-  modelLoader = new Resource::GLModelLoader();
-  textureLoader->LoadTexture("textures/error.png");
+  setupStagingResourceLoaders();
 
   FramebufferResize();
 }
@@ -77,19 +74,38 @@ GLRender::~GLRender()
   delete modelLoader;
 }
 
-Resource::Texture GLRender::LoadTexture(std::string filepath)
-{
-  return textureLoader->LoadTexture(filepath);
+void GLRender::setupStagingResourceLoaders() {
+  stagingTextureLoader = new Resource::GLTextureLoader();
+  stagingFontLoader = new Resource::GLFontLoader();
+  stagingModelLoader = new Resource::GLModelLoader();
+  stagingTextureLoader->LoadTexture("textures/error.png");
 }
 
-Resource::Model GLRender::LoadModel(std::string filepath)
-{
-  return modelLoader->LoadModel(filepath, textureLoader);
+Resource::Texture GLRender::LoadTexture(std::string filepath) {
+  return stagingTextureLoader->LoadTexture(filepath);
 }
 
-Resource::Font GLRender::LoadFont(std::string filepath)
-{
-  return fontLoader->LoadFont(filepath, textureLoader);
+Resource::Model GLRender::LoadModel(std::string filepath) {
+  return stagingModelLoader->LoadModel(filepath, stagingTextureLoader);
+}
+
+Resource::Font GLRender::LoadFont(std::string filepath) {
+  return stagingFontLoader->LoadFont(filepath, stagingTextureLoader);
+}
+
+void GLRender::LoadResourcesToGPU() {
+  // Does nothing in OGL version, but needs to match vulkan functions.
+}
+
+void GLRender::UseLoadedResources() {
+  delete textureLoader;
+  delete fontLoader;
+  delete modelLoader;
+
+  textureLoader = stagingTextureLoader;
+  fontLoader = stagingFontLoader;
+  modelLoader = stagingModelLoader;
+  setupStagingResourceLoaders();
 }
 
 GLRender::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset)
