@@ -170,6 +170,10 @@ void GLModelLoader::loadMaterials(Mesh* mesh, aiMaterial* material, GLTextureLoa
 		aiString aistring;
 		material->GetTexture(aiTextureType_DIFFUSE, i, &aistring);
 		std::string texLocation = aistring.C_Str();
+		for(int i = 0; i < texLocation.size(); i++) {
+		    if(texLocation[i] == '\\')
+			texLocation[i] = '/';
+		}
 		texLocation = "textures/" + texLocation;
 
 		bool skip = false;

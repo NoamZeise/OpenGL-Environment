@@ -22,10 +22,10 @@ GLTextureLoader::LoadedTex::LoadedTex(std::string path) {
   unsigned char *data =
       stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
   if (!data) {
-    std::cerr << "stb_image: failed to load texture at " << path << std::endl;
-    return;
+      std::cerr << "stb_image: failed to load texture at " << path << std::endl;
+      return;
   }
-
+  
   generateTexture(data, width, height, nrChannels);
 
   stbi_image_free(data);

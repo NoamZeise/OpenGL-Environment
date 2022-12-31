@@ -3,19 +3,13 @@
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-
 #include <glm/glm.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 
-#include <stdexcept>
-#include <iostream>
 #include <string>
 #include <atomic>
 #include <vector>
 
 #include "shader.h"
-#include <config.h>
 #include <resources/resources.h>
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"

@@ -1,5 +1,12 @@
 #include "render.h"
 
+#include "ogl_helper.h"
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <stdexcept>
+#include <config.h>
+#include <iostream>
+
 namespace glenv {
 GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
 {
@@ -39,28 +46,11 @@ GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
   std::vector<unsigned int> quadInds =  {0, 1, 2, 3, 4, 5};
   quad = new GLVertexData(quadVerts, quadInds);
 
-  glGenBuffers(1, &model3DSSBO);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model3DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DModel), &perInstance3DModel, GL_DYNAMIC_DRAW);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
-  glGenBuffers(1, &normal3DSSBO);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, normal3DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DNormal), &perInstance3DNormal, GL_DYNAMIC_DRAW);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
-  glGenBuffers(1, &model2DSSBO);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model2DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DModel), &perInstance2DModel, GL_DYNAMIC_DRAW);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
-  glGenBuffers(1, &texOffset2DSSBO);
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, texOffset2DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DTexOffset), &perInstance2DTexOffset, GL_DYNAMIC_DRAW);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
+  ogl_helper::createShaderStorageBuffer(&model3DSSBO, sizeAndPtr(perInstance3DModel));
+  ogl_helper::createShaderStorageBuffer(&normal3DSSBO, sizeAndPtr(perInstance3DNormal));
+  ogl_helper::createShaderStorageBuffer(&model2DSSBO, sizeAndPtr(perInstance2DModel));  
+  ogl_helper::createShaderStorageBuffer(&texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset));
   setupStagingResourceLoaders();
-
   FramebufferResize();
 }
 
@@ -122,7 +112,6 @@ GLRender::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4
   this->modelMatrix = modelMatrix;
   this->normalMatrix = normalMatrix;
 }
-
 
 void GLRender::Begin2DDraw()
 {
@@ -212,16 +201,8 @@ void GLRender::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 c
 {
   glUniform4fv(flatShader->Location("spriteColour"), 1, &currentColour[0]);
 
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model2DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DModel), perInstance2DModel, GL_DYNAMIC_DRAW);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 4, model2DSSBO);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, texOffset2DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance2DTexOffset), perInstance2DTexOffset, GL_DYNAMIC_DRAW);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 5, texOffset2DSSBO);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
+  ogl_helper::shaderStorageBufferData(model2DSSBO, sizeAndPtr(perInstance2DModel), 4);
+  ogl_helper::shaderStorageBufferData(texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset), 5);
   glActiveTexture(GL_TEXTURE0);
   textureLoader->Bind(texture);
   quad->DrawInstanced(GL_TRIANGLES, drawCount);
@@ -229,17 +210,9 @@ void GLRender::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 c
 
 void GLRender::draw3DBatch(int drawCount, Resource::Model model)
 {
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, model3DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DModel), perInstance3DModel, GL_DYNAMIC_DRAW);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, model3DSSBO);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
-  glBindBuffer(GL_SHADER_STORAGE_BUFFER, normal3DSSBO);
-  glBufferData(GL_SHADER_STORAGE_BUFFER, sizeof(perInstance3DNormal), perInstance3DNormal, GL_DYNAMIC_DRAW);
-  glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 3, normal3DSSBO);
-  glBindBuffer( GL_SHADER_STORAGE_BUFFER,0 );
-
-  modelLoader->DrawModelInstanced(model, textureLoader, drawCount, blinnPhongShader->Location("spriteColour"), blinnPhongShader->Location("enableTex"));
+    ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
+    ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
+    modelLoader->DrawModelInstanced(model, textureLoader, drawCount, blinnPhongShader->Location("spriteColour"), blinnPhongShader->Location("enableTex"));
 }
 
 void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat)
@@ -327,6 +300,7 @@ void GLRender::FramebufferResize()
       FramebufferResize();
     }
   }
+  
   bool GLRender::isTargetResForced() { return forceTargetResolution; }
 
   void GLRender::setTargetResolution(glm::vec2 resolution) {
@@ -334,12 +308,12 @@ void GLRender::FramebufferResize()
     forceTargetResolution = true;
     FramebufferResize();
   }
-  glm::vec2 GLRender::getTargetResolution() {
-    return targetResolution;
-  }
+
+  glm::vec2 GLRender::getTargetResolution() { return targetResolution; }
+  
   void GLRender::setVsync(bool vsync) {
     this->vsync = vsync;
     FramebufferResize();
   }
-
+  
 }//namespace
