@@ -14,7 +14,7 @@
 #include "resources/vertex_data.h"
 #include "resources/texture_loader.h"
 #include "resources/font_loader.h"
-#include "resources/model_loader.h"
+#include "resources/model_render.h"
 
 namespace glenv {
 
@@ -139,10 +139,10 @@ public:
 
     Resource::GLTextureLoader *stagingTextureLoader;
     Resource::GLFontLoader *stagingFontLoader;
-    Resource::GLModelLoader *stagingModelLoader;
+    Resource::GLModelRender *stagingModelLoader;
     Resource::GLTextureLoader *textureLoader = nullptr;
     Resource::GLFontLoader *fontLoader = nullptr;
-    Resource::GLModelLoader *modelLoader = nullptr;
+    Resource::GLModelRender *modelLoader = nullptr;
 
   struct Draw2D {
       Draw2D() {}

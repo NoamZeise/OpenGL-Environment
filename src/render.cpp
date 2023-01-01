@@ -67,7 +67,7 @@ GLRender::~GLRender()
 void GLRender::setupStagingResourceLoaders() {
   stagingTextureLoader = new Resource::GLTextureLoader();
   stagingFontLoader = new Resource::GLFontLoader();
-  stagingModelLoader = new Resource::GLModelLoader();
+  stagingModelLoader = new Resource::GLModelRender();
   stagingTextureLoader->LoadTexture("textures/error.png");
 }
 

@@ -1,203 +1,280 @@
 #include "model_loader.h"
-#include "assimp/material.h"
-#include "assimp/types.h"
 
+#include <assimp/anim.h>
+#include <assimp/material.h>
+#include <assimp/matrix4x4.h>
+#include <assimp/scene.h>
+#include <assimp/types.h>
+
+#include <glm/fwd.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/matrix_inverse.hpp>
+#include <vector>
+#include <map>
+#include <string>
 #include <iostream>
+#include <stdexcept>
+
 
 namespace Resource
 {
+
+        const auto IMPORT_PROPS =
+        aiProcess_CalcTangentSpace |
+        aiProcess_Triangulate |
+        aiProcess_FlipUVs |
+        aiProcess_JoinIdenticalVertices |
+        aiProcess_GenNormals |
+        aiProcess_LimitBoneWeights;
+    
+    inline glm::mat4 aiToGLM(aiMatrix4x4 mat)
+    {
+        glm::mat4 glmmat;
+        glmmat[0][0] = mat.a1;
+        glmmat[0][1] = mat.b1;
+        glmmat[0][2] = mat.c1;
+        glmmat[0][3] = mat.d1;
+
+        glmmat[1][0] = mat.a2;
+        glmmat[1][1] = mat.b2;
+        glmmat[1][2] = mat.c2;
+        glmmat[1][3] = mat.d2;
+
+        glmmat[2][0] = mat.a3;
+        glmmat[2][1] = mat.b3;
+        glmmat[2][2] = mat.c3;
+        glmmat[2][3] = mat.d3;
+
+        glmmat[3][0] = mat.a4;
+        glmmat[3][1] = mat.b4;
+        glmmat[3][2] = mat.c4;
+        glmmat[3][3] = mat.d4;
+
+        return glmmat;
+    }
+
+    inline aiMatrix4x4 glmToAi(glm::mat4 mat)
+    {
+        aiMatrix4x4 aiMat = aiMatrix4x4(
+		mat[0][0], mat[0][1], mat[0][2], mat[0][3],
+		mat[1][0], mat[1][1], mat[1][2], mat[1][3],
+		mat[2][0], mat[2][1], mat[2][2], mat[2][3],
+		mat[3][0], mat[3][1], mat[3][2], mat[3][3]);
+        return aiMat;
+    }
 
 GLModelLoader::GLModelLoader()
 {
 
 }
 
-GLModelLoader::~GLModelLoader()
+ModelInfo::Model GLModelLoader::LoadModel(std::string path)
 {
-	for(unsigned int i = 0; i < loadedModels.size(); i++)
-	{
-		delete loadedModels[i];
-	}
-}
+    auto model = ModelInfo::Model{};
 
-Model GLModelLoader::LoadModel(std::string path, GLTextureLoader* texLoader)
-{
-#ifndef NO_ASSIMP
+    const aiScene *scene = importer.ReadFile(path, IMPORT_PROPS);
 
-#ifndef NDEBUG
-	std::cout << "loading model: " << path << std::endl;
-#endif
-
-	Assimp::Importer importer;
-	const aiScene *scene = importer.ReadFile(path,
-		aiProcess_CalcTangentSpace | aiProcess_Triangulate | aiProcess_FlipUVs |
-		aiProcess_JoinIdenticalVertices | aiProcess_GenNormals);
-	if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
+    if(!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode)
 		throw std::runtime_error("failed to load model at \"" + path + "\" assimp error: " + importer.GetErrorString());
-
-	loadedModels.push_back(new LoadedModel());
-	LoadedModel* ldModel = loadedModels[loadedModels.size() - 1];
-	ldModel->directory = path.substr(0, path.find_last_of('/'));
-
-	//correct for blender's orientation
-    glm::mat4 transform = glm::mat4(1.0f);
-    //	glm::mat4 transform = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(-1.0f, 0.0f, 0.0f));
-	//transform = glm::scale(transform, glm::vec3(0.02f));
-	aiMatrix4x4 aiTransform = aiMatrix4x4(
-		transform[0][0], transform[0][1], transform[0][2], transform[0][3],
-		transform[1][0], transform[1][1], transform[1][2], transform[1][3],
-		transform[2][0], transform[2][1], transform[2][2], transform[2][3],
-		transform[3][0], transform[3][1], transform[3][2], transform[3][3]);
-	processNode(ldModel, scene->mRootNode, scene, texLoader, aiTransform);
-
-	return Model(loadedModels.size() - 1);
-#else
-	throw std::runtime_error("tried to load model but NO_ASSIMP is defined!");
+    
+    processNode(&model, scene->mRootNode, scene, aiMatrix4x4(), -1);
+#ifndef  NDEBUG
+    std::cout << "model bone count: " << model.bones.size() << std::endl;
+    std::cout << "model animation count: " << scene->mNumAnimations << std::endl;
 #endif
+
+    if(scene->HasAnimations())
+    {
+        model.animatedModel = true;
+        for(size_t i = 0; i < scene->mNumAnimations; i++)
+        {
+        #ifndef NDEBUG
+            std::cout << "loading animation: " << scene->mAnimations[i]->mName.C_Str() << std::endl;
+        #endif
+            buildAnimation(&model, scene->mAnimations[i]);
+        }
+    }
+
+    importer.FreeScene();
+
+    return model;            
 }
 
-  void GLModelLoader::DrawModel(Model model, GLTextureLoader* texLoader, uint32_t spriteColourShaderLoc)
+void GLModelLoader::processNode(ModelInfo::Model* model, aiNode* node, const aiScene* scene, aiMatrix4x4 parentTransform, int parentNode)
 {
-	if(model.ID >= loadedModels.size())
-	{
-		std::cerr << "model ID out of range" << std::endl;
-		return;
-	}
-
-	for (auto& mesh: loadedModels[model.ID]->meshes)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		texLoader->Bind(mesh.texture);
-        glUniform4fv(spriteColourShaderLoc, 1, &mesh.diffuseColour[0]);
-        
-		mesh.vertexData->Draw(GL_TRIANGLES);
-	}
-}
-
-  void GLModelLoader::DrawModelInstanced(Model model, GLTextureLoader* texLoader, int count, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc)
-{
-	if(model.ID >= loadedModels.size())
-	{
-		std::cerr << "model ID out of range" << std::endl;
-		return;
-	}
-
-	for (auto& mesh: loadedModels[model.ID]->meshes)
-	{
-		glActiveTexture(GL_TEXTURE0);
-		texLoader->Bind(mesh.texture);
-        glUniform4fv(spriteColourShaderLoc, 1, &mesh.diffuseColour[0]);
-        if(mesh.texture.ID == 0)
-          glUniform1i(enableTexShaderLoc, GL_FALSE);
-        else
-          glUniform1i(enableTexShaderLoc, GL_TRUE);
-		mesh.vertexData->DrawInstanced(GL_TRIANGLES, count);
-	}
-}
-
-#ifndef NO_ASSIMP
-void GLModelLoader::processNode(LoadedModel* model, aiNode* node, const aiScene* scene, GLTextureLoader* texLoader, aiMatrix4x4 parentTransform)
-{
+    //std::cout << "processing node: " << node->mName.C_Str() << std::endl;
 	aiMatrix4x4 transform = parentTransform * node->mTransformation;
-    
-	for(unsigned int i = 0; i < node->mNumMeshes; i++)
-	{
-		aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
-		model->meshes.push_back(Mesh());
-		processMesh(&model->meshes[model->meshes.size() - 1], mesh, scene, texLoader, transform);
-	}
-	for(unsigned int i = 0; i < node->mNumChildren; i++)
-	{
-		processNode(model, node->mChildren[i], scene, texLoader, transform);
-	}
+
+    model->nodes.push_back(ModelInfo::Node{});
+    model->nodes.back().parentNode = parentNode;
+    model->nodes.back().transform = aiToGLM(node->mTransformation);
+    int thisID = static_cast<int>(model->nodes.size() - 1);
+    model->nodeMap[node->mName.C_Str()] = thisID;
+    if(parentNode >= 0)
+    {
+        model->nodes[parentNode].children.push_back(thisID);
+    }
+    for(unsigned int i = 0; i < node->mNumMeshes; i++)
+    {
+	aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+	model->meshes.push_back(ModelInfo::Mesh());
+	processMesh(model, mesh, scene, transform);
+    }
+    for(unsigned int i = 0; i < node->mNumChildren; i++)
+    {
+	processNode(model, node->mChildren[i], scene, transform, thisID);
+    }
 }
-void GLModelLoader::processMesh(Mesh* mesh, aiMesh* aimesh, const aiScene* scene, GLTextureLoader* texLoader, aiMatrix4x4 transform)
+void GLModelLoader::processMesh(ModelInfo::Model* model, aiMesh* aimesh, const aiScene* scene, aiMatrix4x4 transform)
 {
-	loadMaterials(mesh, scene->mMaterials[aimesh->mMaterialIndex], texLoader);
-    
+
+    ModelInfo::Mesh* mesh = &model->meshes[model->meshes.size() - 1];
+    mesh->bindTransform = aiToGLM(transform);
+
+    auto material = scene->mMaterials[aimesh->mMaterialIndex];
+
+    aiColor3D diffuseColour;
+    if(material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColour) != AI_SUCCESS)
+    {
+        std::cout << "warning: failed to get diffuse colour\n";
+        mesh->diffuseColour = glm::vec4(1);
+    }
+    else
+    {
+        mesh->diffuseColour = glm::vec4(diffuseColour.r, diffuseColour.g, diffuseColour.b, 1);
+    }
+
+    for(unsigned int i = 0; i < material->GetTextureCount(aiTextureType_DIFFUSE); i++)
+    {
+        aiString texPath;
+        material->GetTexture(aiTextureType_DIFFUSE, i, &texPath);
+        mesh->diffuseTextures.push_back(texPath.C_Str());
+        for(size_t i = 0; i < mesh->diffuseTextures.back().size(); i++)
+            if(mesh->diffuseTextures.back().at(i) == '\\')
+                mesh->diffuseTextures[mesh->diffuseTextures.size() - 1][i] = '/';
+    }
 
 	//vertcies
-	std::vector<GLVertex3D> verticies;
 	for(unsigned int i = 0; i < aimesh->mNumVertices;i++)
 	{
-		aiVector3D transformedVertex = transform * aimesh->mVertices[i];
-		GLVertex3D vertex;
-		vertex.position.x = transformedVertex.x;
-		vertex.position.y = transformedVertex.y;
-		vertex.position.z = transformedVertex.z;
+		ModelInfo::Vertex vertex;
+		vertex.Position.x = aimesh->mVertices[i].x;
+		vertex.Position.y = aimesh->mVertices[i].y;
+		vertex.Position.z = aimesh->mVertices[i].z;
 		if(aimesh->HasNormals())
 		{
-			vertex.normal.x = aimesh->mNormals[i].x;
-			vertex.normal.y = aimesh->mNormals[i].y;
-			vertex.normal.z = aimesh->mNormals[i].z;
+			vertex.Normal.x = aimesh->mNormals[i].x;
+			vertex.Normal.y = aimesh->mNormals[i].y;
+			vertex.Normal.z = aimesh->mNormals[i].z;
 		}
 		else
-			vertex.normal = glm::vec3(0);
+			vertex.Normal = glm::vec3(0);
 		if(aimesh->mTextureCoords[0])
 		{
-			vertex.texCoords.x = aimesh->mTextureCoords[0][i].x;
-			vertex.texCoords.y = aimesh->mTextureCoords[0][i].y;
+			vertex.TexCoord.x = aimesh->mTextureCoords[0][i].x;
+			vertex.TexCoord.y = aimesh->mTextureCoords[0][i].y;
 		}
 		else
-			vertex.texCoords = glm::vec2(0);
+			vertex.TexCoord = glm::vec2(0);
 
-		verticies.push_back(vertex);
+		mesh->verticies.push_back(vertex);
 	}
+
+    //bones - relies on verticies
+    for(unsigned int i = 0; i < aimesh->mNumBones; i++)
+    {
+        auto aibone = aimesh->mBones[i];
+        unsigned int boneID;
+        std::string boneName = aibone->mName.C_Str();
+        if(model->boneMap.find(boneName) == model->boneMap.end())
+        {
+            model->bones.push_back(aiToGLM(aibone->mOffsetMatrix));
+            boneID = static_cast<unsigned int>(model->bones.size() - 1);
+            model->boneMap[boneName] = boneID;
+        }
+        else
+            boneID = model->boneMap[boneName];
+
+
+        for(unsigned int bone = 0; bone < aibone->mNumWeights; bone++)
+        {
+            auto vertexWeight = aibone->mWeights[bone];
+            mesh->verticies[vertexWeight.mVertexId].BoneIDs.push_back(boneID);
+            mesh->verticies[vertexWeight.mVertexId].BoneWeights.push_back(vertexWeight.mWeight);
+        }
+    }
+
 	//indicies
-	std::vector<unsigned int> indicies;
 	for(unsigned int i = 0; i < aimesh->mNumFaces; i++)
 	{
 		aiFace face = aimesh->mFaces[i];
 		for(unsigned int j = 0; j < face.mNumIndices; j++)
-			indicies.push_back(face.mIndices[j]);
+			mesh->indicies.push_back(face.mIndices[j]);
 	}
-	mesh->vertexData = new GLVertexData(verticies, indicies);
+
+
 }
-void GLModelLoader::loadMaterials(Mesh* mesh, aiMaterial* material, GLTextureLoader* texLoader)
+
+void GLModelLoader::buildAnimation(ModelInfo::Model* model, aiAnimation* aiAnim)
 {
-  aiColor3D diffuseColour;
-  if(material->Get(AI_MATKEY_COLOR_DIFFUSE, diffuseColour) != AI_SUCCESS)
-  {
-    std::cout << "Warning : failed to get model's diffuse colour\n";
-  }
-  else
-  {
-    mesh->diffuseColour = glm::vec4(diffuseColour.r, diffuseColour.g, diffuseColour.b, 1);
-  }
-  
-	for(unsigned int i = 0; i < material->GetTextureCount(aiTextureType_DIFFUSE); i++)
-	{
-		aiString aistring;
-		material->GetTexture(aiTextureType_DIFFUSE, i, &aistring);
-		std::string texLocation = aistring.C_Str();
-		for(int i = 0; i < texLocation.size(); i++) {
-		    if(texLocation[i] == '\\')
-			texLocation[i] = '/';
-		}
-		texLocation = "textures/" + texLocation;
+    model->animations.push_back(ModelInfo::Animation());
+    model->animationMap[aiAnim->mName.C_Str()] = static_cast<unsigned int>(model->animations.size());
+    auto anim = &model->animations[model->animations.size() - 1];
+    anim->name = aiAnim->mName.C_Str();
+    //copy nodes from model
+    anim->nodes.resize(model->nodes.size());
+    for(int i = 0; i < model->nodes.size(); i++)
+        anim->nodes[i].modelNode = model->nodes[i];
 
-		bool skip = false;
-		for(unsigned int j = 0; j < loadedTextures.size(); j++)
-		{
-			if(std::strcmp(loadedTextures[j].path.data(), texLocation.c_str()) == 0)
-			{
-				mesh->texture = loadedTextures[j];
-				skip = true;
-				break;
-			}
-		}
-		if(!skip)
-		{
+    anim->duration = aiAnim->mDuration;
+    anim->ticks = aiAnim->mTicksPerSecond * 0.001; //for ms time
+    if(anim->ticks == 0)
+    {
+    #ifndef NDEBUG
+        std::cout << "WARNING: format does not specify ticks, using 100/s\n";
+    #endif
+        anim->ticks = 100;
+    }
 
-			mesh->texture = texLoader->LoadTexture(texLocation);
-#ifndef NDEBUG
-			std::cout << "^ for model" << std::endl;
-#endif
-			//mesh->texture.type = TextureType::Diffuse; //attention
-			loadedTextures.push_back(mesh->texture);
-		}
-	}
+    //set animation props for anim nodes
+    for(unsigned int i = 0 ; i < aiAnim->mNumChannels; i++)
+    {
+        auto channel = aiAnim->mChannels[i];
+        std::string nodeName = channel->mNodeName.C_Str();
+        auto node = &anim->nodes[model->nodeMap[nodeName]];
+        //std::cout <<  "node animation process: " << nodeName << std::endl;
+        //std::cout << "keys: " << channel->mNumPositionKeys << std::endl;
+        if(model->boneMap.find(nodeName) != model->boneMap.end())
+        {
+            node->boneID = model->boneMap[nodeName];
+            node->boneOffset = model->bones[node->boneID];
+        }
+        //else bone directly affects no nodes;
+
+        for(unsigned int pos = 0; pos < channel->mNumPositionKeys; pos++)
+        {
+            auto posKey = channel->mPositionKeys[pos];
+            node->positions.push_back(ModelInfo::AnimationKey::Position{});
+            node->positions.back().Pos = glm::vec3(posKey.mValue.x, posKey.mValue.y, posKey.mValue.z);
+            node->positions.back().time = posKey.mTime;
+        }
+
+        for(unsigned int rot = 0; rot < channel->mNumRotationKeys; rot++)
+        {
+            auto rotKey = channel->mRotationKeys[rot];
+            node->rotationsQ.push_back(ModelInfo::AnimationKey::RotationQ{});
+            node->rotationsQ.back().Rot = glm::quat(rotKey.mValue.w, rotKey.mValue.x, rotKey.mValue.y, rotKey.mValue.z);
+            node->rotationsQ.back().time = rotKey.mTime;
+        }
+
+        for(unsigned int scl = 0; scl < channel->mNumScalingKeys; scl++)
+        {
+            auto scaleKey = channel->mScalingKeys[scl];
+            node->scalings.push_back(ModelInfo::AnimationKey::Scaling{});
+            node->scalings.back().scale = glm::vec3(scaleKey.mValue.x, scaleKey.mValue.y, scaleKey.mValue.z);
+            node->scalings.back().time = scaleKey.mTime;
+        }
+    }
 }
-#endif
 
 }
