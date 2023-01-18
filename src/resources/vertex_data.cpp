@@ -1,5 +1,4 @@
 #include "vertex_data.h"
-#include <vcruntime.h>
 
 GLVertexData::GLVertexData(std::vector<GLVertex2D> &vertices, std::vector<unsigned int> &indicies)
 {
