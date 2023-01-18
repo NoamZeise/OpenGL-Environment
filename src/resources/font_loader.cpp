@@ -48,7 +48,7 @@ namespace Resource
 
         draws.push_back(QuadDraw(cTex->texture, model, colour));
       }
-      position.x += cTex->advance * size;
+      position.x += (float)cTex->advance * size;
     }
     return draws;
   }
@@ -172,7 +172,7 @@ float GLFontLoader::LoadedFont::MeasureString(std::string text, float size)
 		Character* cTex = getChar(*c);
 		if (cTex == nullptr)
 			continue;
-		sz += cTex->advance * size;
+		sz += (float)cTex->advance * size;
 	}
 	return sz;
 }

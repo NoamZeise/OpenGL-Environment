@@ -16,7 +16,7 @@ namespace ogl_helper
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
   }
 
-  void shaderStorageBufferData(GLuint glBuffer, size_t bufferSize, void* pBufferArray, size_t bufferBaseSize)
+  void shaderStorageBufferData(GLuint glBuffer, size_t bufferSize, void* pBufferArray, GLuint bufferBaseSize)
   {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, glBuffer);
     glBufferData(GL_SHADER_STORAGE_BUFFER, bufferSize, pBufferArray, GL_DYNAMIC_DRAW);

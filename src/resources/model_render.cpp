@@ -99,13 +99,13 @@ void GLModelRender::processNode(LoadedModel* model, aiNode* node, const aiScene*
 {
 	aiMatrix4x4 transform = parentTransform * node->mTransformation;
     
-	for(unsigned int i = 0; i < node->mNumMeshes; i++)
+	for(size_t i = 0; i < node->mNumMeshes; i++)
 	{
-		aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
+	    aiMesh *mesh = scene->mMeshes[node->mMeshes[i]];
 		model->meshes.push_back(Mesh());
 		processMesh(&model->meshes[model->meshes.size() - 1], mesh, scene, texLoader, transform);
 	}
-	for(unsigned int i = 0; i < node->mNumChildren; i++)
+	for(size_t i = 0; i < node->mNumChildren; i++)
 	{
 		processNode(model, node->mChildren[i], scene, texLoader, transform);
 	}

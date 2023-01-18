@@ -1,8 +1,9 @@
 #include "vertex_data.h"
+#include <vcruntime.h>
 
 GLVertexData::GLVertexData(std::vector<GLVertex2D> &vertices, std::vector<unsigned int> &indicies)
 {
-	this->size = indicies.size();
+    this->size = (GLuint)indicies.size();
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
@@ -13,7 +14,7 @@ GLVertexData::GLVertexData(std::vector<GLVertex2D> &vertices, std::vector<unsign
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLVertex2D), vertices.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicies.size() * sizeof(unsigned int), indicies.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicies.size() * sizeof(GLuint), indicies.data(), GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLVertex2D), (void*)offsetof(GLVertex2D, position));
@@ -23,7 +24,7 @@ GLVertexData::GLVertexData(std::vector<GLVertex2D> &vertices, std::vector<unsign
 
 GLVertexData::GLVertexData(std::vector<GLVertex3D> &vertices, std::vector<unsigned int> &indicies)
 {
-	this->size = indicies.size();
+    this->size = (GLuint)indicies.size();
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 	glGenBuffers(1, &EBO);
@@ -34,7 +35,7 @@ GLVertexData::GLVertexData(std::vector<GLVertex3D> &vertices, std::vector<unsign
 	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(GLVertex3D), vertices.data(), GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicies.size() * sizeof(unsigned int), indicies.data(), GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, indicies.size() * sizeof(GLuint), indicies.data(), GL_STATIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(GLVertex3D), (void*)offsetof(GLVertex3D, position));
