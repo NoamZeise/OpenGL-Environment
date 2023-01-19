@@ -13,7 +13,7 @@ namespace Resource
 
 GLTextureLoader::LoadedTex::LoadedTex(std::string path) {
 #ifndef NDEBUG
-  std::cout << "loading texture: " << path << std::endl;
+  std::cout << "loading texture: " << path;
 #endif
   ID = 0;
   width = 0;

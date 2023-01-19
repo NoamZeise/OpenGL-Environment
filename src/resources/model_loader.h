@@ -1,14 +1,8 @@
 #ifndef GL_MODEL_LOADER_H
 #define GL_MODEL_LOADER_H
 
-#include <glm/glm.hpp>
-
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#include <assimp/anim.h>
-#include <assimp/matrix4x4.h>
-#include <assimp/mesh.h>
 
 #include <resources/model/model_info.h>
 
@@ -16,10 +10,10 @@ namespace Resource
 {
 
 
-class GLModelLoader
+class ModelLoader
 {
 public:
-    GLModelLoader();
+    ModelLoader();
 
     ModelInfo::Model LoadModel(std::string path);
 

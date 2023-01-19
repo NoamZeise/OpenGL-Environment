@@ -9,7 +9,8 @@
 
 #include "vertex_data.h"
 #include "texture_loader.h"
-#include "model_loader.h"
+
+#include <resources/model_loader.h>
 #include <resources/resources.h>
 
 namespace Resource {
@@ -51,7 +52,7 @@ private:
                      GLTextureLoader *texLoader);
 #endif
 
-  GLModelLoader modelLoader;
+  ModelLoader modelLoader;
   std::vector<LoadedModel *> loadedModels;
   std::vector<Texture> loadedTextures;
 };
