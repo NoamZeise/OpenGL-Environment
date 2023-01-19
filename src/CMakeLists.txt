@@ -7,19 +7,23 @@ file(GLOB OGL_RENDER_SOURCES
 set(OpenGL-Render-Lib "OpenGL-Renderer")
 
 add_library(${OpenGL-Render-Lib} ${OGL_RENDER_SOURCES})
-target_include_directories(${OpenGL-Render-Lib} PUBLIC ${CMAKE_SOURCE_DIR}/include/)
+target_include_directories(${OpenGL-Render-Lib} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../include/)
+
+add_dependencies(${OpenGL-Render-Lib} ResourceLoader SharedHelper)
+target_link_libraries(${OpenGL-Render-Lib} PRIVATE ResourceLoader)
+target_link_libraries(${OpenGL-Render-Lib} PUBLIC SharedHelper)
 
 if(UNIX)
-    target_include_directories(${OpenGL-Render-Lib} PUBLIC ${FREETYPE_INCLUDE_DIRS})
-    target_link_libraries(${OpenGL-Render-Lib} glfw
+    target_include_directories(${OpenGL-Render-Lib} PRIVATE ${FREETYPE_INCLUDE_DIRS})
+    target_link_libraries(${OpenGL-Render-Lib} PRIVATE glfw
                                          ${FREETYPE_LIBRARIES}
                                          assimp
                                          sndfile
                                          portaudio
                                          ${CMAKE_DL_LIBS})
 else()
-    target_include_directories(${OpenGL-Render-Lib} PUBLIC "D:/noam4/Libraries/VS/include")
-    target_link_libraries(${OpenGL-Render-Lib} ${Lib}glfw3.lib
+    target_include_directories(${OpenGL-Render-Lib} PRIVATE "D:/noam4/Libraries/VS/include")
+    target_link_libraries(${OpenGL-Render-Lib} PRIVATE ${Lib}glfw3.lib
                                          ${Lib}freetype.lib
                                          ${Lib}assimp-vc140-mt.lib
                                          ${Lib}portaudio_x64.lib
