@@ -1,12 +1,16 @@
 #include "render.h"
 
-#include "GLFW/glfw3.h"
 #include "ogl_helper.h"
+#include "shader.h"
+#include "resources/vertex_data.h"
+#include "resources/texture_loader.h"
+#include "resources/font_loader.h"
+
+#include "resources/model_render.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <stdexcept>
 #include <config.h>
-#include <iostream>
 
 namespace glenv {
 GLRender::GLRender(GLFWwindow *window) {

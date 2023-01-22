@@ -9,17 +9,21 @@
 #include <string>
 #include <atomic>
 #include <vector>
+#include <iostream>
 
 #include <resources/resources.h>
 
-#include "shader.h"
-#include "resources/vertex_data.h"
-#include "resources/texture_loader.h"
-#include "resources/font_loader.h"
-#include "resources/model_render.h"
+namespace Resource {
+    class GLTextureLoader;
+    class GLModelRender;
+    class GLFontLoader;
+
+} // namespace Resource
+
+class GLVertexData;
 
 namespace glenv {
-
+class GLShader;
 //match in shaders
 const int MAX_2D_DRAWS = 10000;
 const int MAX_3D_DRAWS = 10000;
