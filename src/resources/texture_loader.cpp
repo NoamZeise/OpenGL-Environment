@@ -1,17 +1,17 @@
+
 #include "texture_loader.h"
 
 #include <iostream>
 #include <string>
 
 #include <glad/glad.h>
-#include <config.h>
 
 #include <resources/stb_image.h>
 
 namespace Resource
 {
 
-GLTextureLoader::LoadedTex::LoadedTex(std::string path) {
+  GLTextureLoader::LoadedTex::LoadedTex(std::string path, bool mipmapping, bool pixelated) {
 #ifndef NDEBUG
   std::cout << "loading texture: " << path;
 #endif
@@ -26,18 +26,19 @@ GLTextureLoader::LoadedTex::LoadedTex(std::string path) {
       return;
   }
   
-  generateTexture(data, width, height, nrChannels);
+  generateTexture(data, width, height, nrChannels, mipmapping, pixelated);
 
   stbi_image_free(data);
 }
 
 GLTextureLoader::LoadedTex::LoadedTex(unsigned char *data, int width,
-                                      int height, int nrChannels) {
-  generateTexture(data, width, height, nrChannels);
+                                      int height, int nrChannels, bool mipmapping, bool pixelated) {
+  generateTexture(data, width, height, nrChannels, mipmapping, pixelated);
 }
 
 void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
-                                                 int height, int nrChannels) {
+                                                 int height, int nrChannels,
+						 bool mipmapping, bool pixelated) {
   unsigned int format = GL_RGBA;
   if (nrChannels == 1)
     format = GL_RED;
@@ -55,13 +56,13 @@ void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
   glBindTexture(GL_TEXTURE_2D, ID);
   glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
                GL_UNSIGNED_BYTE, data);
-  if (settings::MIP_MAPPING)
+  if (mipmapping)
     glGenerateMipmap(GL_TEXTURE_2D);
 
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-  if (settings::PIXELATED) {
+  if (pixelated) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   } else {
@@ -74,7 +75,10 @@ GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &ID); }
 
 void GLTextureLoader::LoadedTex::Bind() { glBindTexture(GL_TEXTURE_2D, ID); }
 
-GLTextureLoader::GLTextureLoader() {}
+  GLTextureLoader::GLTextureLoader(bool mipmapping, bool pixelated) {
+    this->mipmapping = mipmapping;
+    this->pixelated = pixelated;
+  }
 
 GLTextureLoader::~GLTextureLoader() {
   for (unsigned int i = 0; i < textures.size(); i++) {
@@ -83,7 +87,7 @@ GLTextureLoader::~GLTextureLoader() {
 }
 
 Texture GLTextureLoader::LoadTexture(std::string path) {
-  textures.push_back(new LoadedTex(path));
+  textures.push_back(new LoadedTex(path, mipmapping, pixelated));
   return Texture((unsigned int)(textures.size() - 1),
                  glm::vec2(textures.back()->width, textures.back()->height),
                  path);
@@ -91,7 +95,7 @@ Texture GLTextureLoader::LoadTexture(std::string path) {
 
 Texture GLTextureLoader::LoadTexture(unsigned char *data, int width, int height,
                                      int nrChannels) {
-  textures.push_back(new LoadedTex(data, width, height, nrChannels));
+  textures.push_back(new LoadedTex(data, width, height, nrChannels, mipmapping, pixelated));
   return Texture((unsigned int)(textures.size() - 1),
                  glm::vec2(textures.back()->width, textures.back()->height),
                  "FONT");

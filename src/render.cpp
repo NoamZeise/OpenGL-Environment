@@ -10,7 +10,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <stdexcept>
-#include <config.h>
 
 namespace glenv {
 GLRender::GLRender(GLFWwindow *window) {
@@ -76,7 +75,9 @@ GLRender::~GLRender()
 }
 
 void GLRender::setupStagingResourceLoaders() {
-  stagingTextureLoader = new Resource::GLTextureLoader();
+  stagingTextureLoader = new Resource::GLTextureLoader(
+						       true, false //mipmapping, nearest image filter
+      );
   stagingFontLoader = new Resource::GLFontLoader();
   stagingModelLoader = new Resource::GLModelRender();
   stagingTextureLoader->LoadTexture("textures/error.png");
