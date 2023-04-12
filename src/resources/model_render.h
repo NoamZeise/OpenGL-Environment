@@ -11,6 +11,7 @@
 #include "texture_loader.h"
 
 #include <resource_loader/model_loader.h>
+#include <resource_loader/vertex_model.h>
 #include <resources/resources.h>
 
 namespace Resource {
@@ -27,34 +28,27 @@ public:
                           uint32_t enableTexShaderLoc);
 
 private:
-  struct Mesh {
+  struct GLMesh {
     GLVertexData *vertexData;
     Texture texture;
     glm::vec4 diffuseColour;
   };
-  struct LoadedModel {
-    LoadedModel() {}
-    ~LoadedModel() {
-      for (unsigned int j = 0; j < meshes.size(); j++) {
-        delete meshes[j].vertexData;
-      }
-    }
-    std::vector<Mesh> meshes;
+  struct GLLoadedModel {
+      GLLoadedModel(){}
+    ~GLLoadedModel();
+    std::vector<GLMesh> meshes;
     std::string directory;
   };
 
-#ifndef NO_ASSIMP
-  void processNode(LoadedModel *model, aiNode *node, const aiScene *scene,
-                   GLTextureLoader *texLoader, aiMatrix4x4 parentTransform);
-  void processMesh(Mesh *mesh, aiMesh *aimesh, const aiScene *scene,
-                   GLTextureLoader *texLoader, aiMatrix4x4 transform);
-  void loadMaterials(Mesh *mesh, aiMaterial *material,
-                     GLTextureLoader *texLoader);
-#endif
-
+  template <class T_Vert>
+  void addLoadedModel(LoadedModel<T_Vert> &model, GLTextureLoader *texLoader);
+    
   ModelLoader modelLoader;
-  std::vector<LoadedModel *> loadedModels;
+  std::vector<GLLoadedModel *> loadedModels;
   std::vector<Texture> loadedTextures;
+
+  uint32_t currentIndex = 0;
+  ModelGroup<Vertex3D> loaded3D;
 };
 
 } // namespace Resource

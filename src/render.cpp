@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <stdexcept>
+#include <vertex_types.h>
 
 namespace glenv {
 GLRender::GLRender(GLFWwindow *window) {
@@ -45,13 +46,13 @@ GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
 
   view2D = glm::mat4(1.0f);
 
-  std::vector<GLVertex2D> quadVerts = {
-    GLVertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-    GLVertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
-    GLVertex2D(0.0f, 0.0f, 0.0f, 0.0f, 0.0f),
-    GLVertex2D(0.0f, 1.0f, 0.0f, 0.0f, 1.0f),
-    GLVertex2D(1.0f, 1.0f, 0.0f, 1.0f, 1.0f),
-    GLVertex2D(1.0f, 0.0f, 0.0f, 1.0f, 0.0f),
+  std::vector<Vertex2D> quadVerts = {
+      {{0.0f, 1.0f, 0.0f}, { 0.0f, 1.0f}},
+      {{1.0f, 0.0f, 0.0f}, { 1.0f, 0.0f}},
+      {{0.0f, 0.0f, 0.0f}, { 0.0f, 0.0f}},
+      {{0.0f, 1.0f, 0.0f}, { 0.0f, 1.0f}},
+      {{1.0f, 1.0f, 0.0f}, { 1.0f, 1.0f}},
+      {{1.0f, 0.0f, 0.0f}, { 1.0f, 0.0f}},
   };
   std::vector<unsigned int> quadInds =  {0, 1, 2, 3, 4, 5};
   quad = new GLVertexData(quadVerts, quadInds);
