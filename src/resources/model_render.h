@@ -10,7 +10,7 @@
 #include "vertex_data.h"
 #include "texture_loader.h"
 
-#include <resources/model_loader.h>
+#include <resource_loader/model_loader.h>
 #include <resources/resources.h>
 
 namespace Resource {

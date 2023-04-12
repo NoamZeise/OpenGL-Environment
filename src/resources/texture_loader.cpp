@@ -6,7 +6,7 @@
 
 #include <glad/glad.h>
 
-#include <resources/stb_image.h>
+#include <resource_loader/stb_image.h>
 
 namespace Resource
 {
