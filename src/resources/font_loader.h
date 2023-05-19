@@ -10,9 +10,7 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include <glmhelper.h>
-
-#include <resources/resources.h>
+#include <graphics/glm_helper.h>
 #include "texture_loader.h"
 
 namespace Resource

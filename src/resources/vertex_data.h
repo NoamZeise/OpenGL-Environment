@@ -3,7 +3,7 @@
 
 #include <glad/glad.h>
 #include <glm/glm.hpp>
-#include <vertex_types.h>
+#include <resource_loader/vertex_types.h>
 
 #include <vector>
 

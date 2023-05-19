@@ -1,7 +1,7 @@
 #ifndef GLTEXTURE_LOADER_H
 #define GLTEXTURE_LOADER_H
 
-#include <resources/resources.h>
+#include <graphics/resources.h>
 #include <vector>
 
 namespace Resource

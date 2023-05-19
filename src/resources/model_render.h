@@ -12,7 +12,7 @@
 
 #include <resource_loader/model_loader.h>
 #include <resource_loader/vertex_model.h>
-#include <resources/resources.h>
+#include <graphics/resources.h>
 
 namespace Resource {
 
@@ -20,7 +20,8 @@ class GLModelRender {
 public:
   GLModelRender();
   ~GLModelRender();
-  Model LoadModel(std::string path, GLTextureLoader *texLoader);
+  Model Load3DModel(std::string path, GLTextureLoader *texLoader);
+  Model Load3DModel(ModelInfo::Model& model, GLTextureLoader *texLoader);
   void DrawModel(Model model, GLTextureLoader *texLoader,
                  uint32_t spriteColourShaderLoc);
   void DrawModelInstanced(Model model, GLTextureLoader *texLoader, int count,
@@ -39,9 +40,12 @@ private:
     std::vector<GLMesh> meshes;
     std::string directory;
   };
-
+    template <class T_Vert>
+    Model loadModelInfo(ModelInfo::Model& model, ModelGroup<T_Vert>& modelGroup,
+			GLTextureLoader* texLoader);
+    ModelInfo::Model loadModelFromFile(std::string path);
   template <class T_Vert>
-  void addLoadedModel(LoadedModel<T_Vert> &model, GLTextureLoader *texLoader);
+  void addLoadedModel(LoadedModel<T_Vert>* model, GLTextureLoader *texLoader);
     
   ModelLoader modelLoader;
   std::vector<GLLoadedModel *> loadedModels;

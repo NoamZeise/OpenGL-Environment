@@ -10,7 +10,6 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <stdexcept>
-#include <vertex_types.h>
 
 namespace glenv {
 GLRender::GLRender(GLFWwindow *window) {
@@ -88,8 +87,12 @@ Resource::Texture GLRender::LoadTexture(std::string filepath) {
   return stagingTextureLoader->LoadTexture(filepath);
 }
 
-Resource::Model GLRender::LoadModel(std::string filepath) {
-  return stagingModelLoader->LoadModel(filepath, stagingTextureLoader);
+Resource::Model GLRender::Load3DModel(std::string filepath) {
+  return stagingModelLoader->Load3DModel(filepath, stagingTextureLoader);
+}
+
+Resource::Model GLRender::Load3DModel(ModelInfo::Model &model) {
+    return stagingModelLoader->Load3DModel(model, stagingTextureLoader);
 }
 
 Resource::Font GLRender::LoadFont(std::string filepath) {

@@ -11,7 +11,7 @@
 #include <vector>
 #include <iostream>
 
-#include <resources/resources.h>
+#include <graphics/resources.h>
 
 namespace Resource {
     class GLTextureLoader;
@@ -47,7 +47,8 @@ public:
     ~GLRender();
 
     Resource::Texture LoadTexture(std::string filepath);
-    Resource::Model LoadModel(std::string filepath);
+    Resource::Model Load3DModel(std::string filepath);
+    Resource::Model Load3DModel(ModelInfo::Model &model);
     Resource::Font LoadFont(std::string filepath);
 
     Resource::Model

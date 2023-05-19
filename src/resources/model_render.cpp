@@ -33,10 +33,10 @@ GLModelRender::GLLoadedModel::~GLLoadedModel() {
 }
 
 template <class T_Vert>
-void GLModelRender::addLoadedModel(LoadedModel<T_Vert> &modelData, GLTextureLoader *texLoader) {
+void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoader *texLoader) {
     loadedModels.push_back(new GLLoadedModel());
     GLLoadedModel* model = loadedModels.back();
-    for(Mesh<T_Vert> *meshData: modelData.meshes) {
+    for(Mesh<T_Vert> *meshData: modelData->meshes) {
 	model->meshes.push_back(GLMesh());
 	GLMesh* mesh = &model->meshes[model->meshes.size() - 1];
 	mesh->vertexData = new GLVertexData(meshData->verticies, meshData->indicies);
@@ -51,22 +51,36 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert> &modelData, GLTextureLoad
     }
 }
 
-  Model GLModelRender::LoadModel(std::string path, GLTextureLoader* texLoader) {
+  ModelInfo::Model GLModelRender::loadModelFromFile(std::string path) {
 #ifndef NO_ASSIMP
-
-#ifndef NDEBUG
+      #ifndef NDEBUG
       std::cout << "loading model: " << path << std::endl;
 #endif
-      Model userModel(currentIndex);
-      ModelInfo::Model fileModel = modelLoader.LoadModel(path);
-      loaded3D.loadModel(fileModel, currentIndex);
-      addLoadedModel(loaded3D.models[loaded3D.models.size() - 1], texLoader);
-      loaded3D.clearData();
-      currentIndex++;
-      return userModel;
+      return modelLoader.LoadModel(path);
 #else
-      throw std::runtime_error("tried to load model but NO_ASSIMP is defined!");
+      throw std::runtime_error("tried to load model from file, but NO_ASSIMP is defined"
+"so that feature is disabled!");
 #endif
+  }
+
+  template <class T_Vert>
+  Model GLModelRender::loadModelInfo(ModelInfo::Model& model,
+				   ModelGroup<T_Vert>& modelGroup,
+				   GLTextureLoader* texLoader) {
+      Model userModel(currentIndex++);
+      modelGroup.loadModel(model, userModel.ID);
+      addLoadedModel(modelGroup.getPreviousModel(), texLoader);
+      modelGroup.clearData();
+      return userModel;
+  }
+
+  Model GLModelRender::Load3DModel(ModelInfo::Model& model, GLTextureLoader* texLoader) {
+      return loadModelInfo(model, loaded3D, texLoader);
+  }
+
+  Model GLModelRender::Load3DModel(std::string path, GLTextureLoader* texLoader) {
+      ModelInfo::Model fileModel = loadModelFromFile(path);
+      return Load3DModel(fileModel, texLoader);
   }
 
   void GLModelRender::DrawModel(Model model, GLTextureLoader* texLoader,
