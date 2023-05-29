@@ -7,25 +7,21 @@
 
 namespace Resource
 {
-
-    const auto IMPORT_PROPS =
-        aiProcess_CalcTangentSpace |
-        aiProcess_Triangulate |
-        aiProcess_FlipUVs |
-        aiProcess_JoinIdenticalVertices |
-        aiProcess_GenNormals |
-        aiProcess_LimitBoneWeights;
-
-
-GLModelRender::GLModelRender()
-{
-
+GLModelRender::GLModelRender() {
+    loadQuad();
 }
 
 GLModelRender::~GLModelRender() {
     for(unsigned int i = 0; i < loadedModels.size(); i++)
 	delete loadedModels[i];
 }
+
+
+void GLModelRender::loadQuad() {
+    ModelInfo::Model quad = makeQuadModel();
+    quadIndex = loadModel(ModelType::m2D, quad, nullptr, nullptr).ID;
+}
+  
 
 GLModelRender::GLLoadedModel::~GLLoadedModel() {
     for (unsigned int j = 0; j < meshes.size(); j++)
@@ -68,19 +64,43 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 				   ModelGroup<T_Vert>& modelGroup,
 				   GLTextureLoader* texLoader) {
       Model userModel(currentIndex++);
+      userModel.type = getModelType(T_Vert());
       modelGroup.loadModel(model, userModel.ID);
       addLoadedModel(modelGroup.getPreviousModel(), texLoader);
       modelGroup.clearData();
       return userModel;
   }
 
-  Model GLModelRender::Load3DModel(ModelInfo::Model& model, GLTextureLoader* texLoader) {
-      return loadModelInfo(model, loaded3D, texLoader);
+  Model GLModelRender::loadModel(ModelType type, std::string path, GLTextureLoader *texLoader,
+				 std::vector<ModelAnimation> *pGetAnimations) {
+      ModelInfo::Model fileModel = loadModelFromFile(path);
+      return loadModel(type, fileModel, texLoader, pGetAnimations);
   }
 
-  Model GLModelRender::Load3DModel(std::string path, GLTextureLoader* texLoader) {
-      ModelInfo::Model fileModel = loadModelFromFile(path);
-      return Load3DModel(fileModel, texLoader);
+  Model GLModelRender::loadModel(ModelType type, ModelInfo::Model& model, GLTextureLoader *texLoader,
+				 std::vector<ModelAnimation> *pGetAnimations) {
+      switch(type) {
+      case ModelType::m2D:
+	  return loadModelInfo(model, loaded2D, texLoader);
+      case ModelType::m3D:
+	  return loadModelInfo(model, loaded3D, texLoader);
+      case ModelType::m3D_Anim:
+	  Model userModel = loadModelInfo(model, loadedAnim3D, texLoader);
+	  if(pGetAnimations != nullptr)
+	      for(ModelInfo::Animation anim : model.animations) {
+		  loadedAnim3D.getPreviousModel()->animations
+		      .push_back(ModelAnimation(model.bones, anim));
+		  pGetAnimations->push_back(
+			  loadedAnim3D.getPreviousModel()->
+			  animations[loadedAnim3D.getPreviousModel()->animations.size() - 1]);
+	      }
+	  return userModel;
+      }
+      throw std::runtime_error("tried to load model with unrecognized type");
+  }
+
+  void GLModelRender::DrawQuad(int count) {
+      loadedModels[quadIndex]->meshes[0].vertexData->DrawInstanced(GL_TRIANGLES, count);
   }
 
   void GLModelRender::DrawModel(Model model, GLTextureLoader* texLoader,

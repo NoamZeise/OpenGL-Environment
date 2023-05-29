@@ -44,18 +44,7 @@ GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
   glUniform1i(flatShader->Location("image"), 0);
 
   view2D = glm::mat4(1.0f);
-
-  std::vector<Vertex2D> quadVerts = {
-      {{0.0f, 1.0f, 0.0f}, { 0.0f, 1.0f}},
-      {{1.0f, 0.0f, 0.0f}, { 1.0f, 0.0f}},
-      {{0.0f, 0.0f, 0.0f}, { 0.0f, 0.0f}},
-      {{0.0f, 1.0f, 0.0f}, { 0.0f, 1.0f}},
-      {{1.0f, 1.0f, 0.0f}, { 1.0f, 1.0f}},
-      {{1.0f, 0.0f, 0.0f}, { 1.0f, 0.0f}},
-  };
-  std::vector<unsigned int> quadInds =  {0, 1, 2, 3, 4, 5};
-  quad = new GLVertexData(quadVerts, quadInds);
-
+  
   ogl_helper::createShaderStorageBuffer(&model3DSSBO, sizeAndPtr(perInstance3DModel));
   ogl_helper::createShaderStorageBuffer(&normal3DSSBO, sizeAndPtr(perInstance3DNormal));
   ogl_helper::createShaderStorageBuffer(&model2DSSBO, sizeAndPtr(perInstance2DModel));  
@@ -66,7 +55,6 @@ GLRender::GLRender(GLFWwindow *window, glm::vec2 target)
 
 GLRender::~GLRender()
 {
-  delete quad;
   delete blinnPhongShader;
   delete flatShader;
   delete textureLoader;
@@ -88,11 +76,13 @@ Resource::Texture GLRender::LoadTexture(std::string filepath) {
 }
 
 Resource::Model GLRender::Load3DModel(std::string filepath) {
-  return stagingModelLoader->Load3DModel(filepath, stagingTextureLoader);
+    return stagingModelLoader->loadModel(Resource::ModelType::m3D, filepath,
+					 stagingTextureLoader, nullptr);
 }
 
 Resource::Model GLRender::Load3DModel(ModelInfo::Model &model) {
-    return stagingModelLoader->Load3DModel(model, stagingTextureLoader);
+    return stagingModelLoader->loadModel(Resource::ModelType::m3D, model, stagingTextureLoader,
+					 nullptr);
 }
 
 Resource::Font GLRender::LoadFont(std::string filepath) {
@@ -221,7 +211,7 @@ void GLRender::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 c
   ogl_helper::shaderStorageBufferData(texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset), 5);
   glActiveTexture(GL_TEXTURE0);
   textureLoader->Bind(texture);
-  quad->DrawInstanced(GL_TRIANGLES, drawCount);
+  modelLoader->DrawQuad(drawCount);
 }
 
 void GLRender::draw3DBatch(int drawCount, Resource::Model model)

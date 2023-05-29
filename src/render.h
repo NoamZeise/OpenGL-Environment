@@ -141,9 +141,7 @@ public:
     glm::mat4 proj3D;
     glm::mat4 view3D;
     float fov;
-
-    GLVertexData *quad;
-
+    
     Resource::GLTextureLoader *stagingTextureLoader;
     Resource::GLFontLoader *stagingFontLoader;
     Resource::GLModelRender *stagingModelLoader;
