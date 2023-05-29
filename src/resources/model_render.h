@@ -53,6 +53,7 @@ private:
 
   uint32_t currentIndex = 0;
   ModelGroup<Vertex3D> loaded3D;
+    
 };
 
 } // namespace Resource

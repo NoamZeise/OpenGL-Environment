@@ -11,8 +11,9 @@ class GLVertexData
 {
 public:
     GLVertexData() {}
-    GLVertexData(std::vector<Vertex2D> &vertices, std::vector<unsigned int> &indicies);
-    GLVertexData(std::vector<Vertex3D> &vertices, std::vector<unsigned int> &indicies);
+    GLVertexData(std::vector<Vertex2D> &vertices, std::vector<unsigned int> &indices);
+    GLVertexData(std::vector<Vertex3D> &vertices, std::vector<unsigned int> &indices);
+    GLVertexData(std::vector<VertexAnim3D> &verticies, std::vector<unsigned int> &indices);
     ~GLVertexData();
     
     void Draw(unsigned int mode);
@@ -20,6 +21,9 @@ public:
     void Draw(unsigned int mode, unsigned int verticies);
 
 private:
+    template <class T>
+    void initBuffers(std::vector<T> &vertices, std::vector<unsigned int> &indices);
+    
     GLuint VAO;
     GLuint VBO;
     GLuint EBO;
