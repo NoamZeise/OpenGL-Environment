@@ -61,12 +61,21 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 
   template <class T_Vert>
   Model GLModelRender::loadModelInfo(ModelInfo::Model& model,
-				   ModelGroup<T_Vert>& modelGroup,
-				   GLTextureLoader* texLoader) {
+				     ModelGroup<T_Vert>& modelGroup,
+				     GLTextureLoader* texLoader,
+				     std::vector<ModelAnimation> *pGetAnimations) {
       Model userModel(currentIndex++);
       userModel.type = getModelType(T_Vert());
       modelGroup.loadModel(model, userModel.ID);
       addLoadedModel(modelGroup.getPreviousModel(), texLoader);
+      if(pGetAnimations != nullptr)
+	  for(ModelInfo::Animation anim : model.animations) {
+	      loadedAnim3D.getPreviousModel()->animations
+		  .push_back(ModelAnimation(model.bones, anim));
+	      pGetAnimations->push_back(
+		      loadedAnim3D.getPreviousModel()->
+		      animations[loadedAnim3D.getPreviousModel()->animations.size() - 1]);
+	  }
       modelGroup.clearData();
       return userModel;
   }
@@ -81,20 +90,11 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 				 std::vector<ModelAnimation> *pGetAnimations) {
       switch(type) {
       case ModelType::m2D:
-	  return loadModelInfo(model, loaded2D, texLoader);
+	  return loadModelInfo(model, loaded2D, texLoader, pGetAnimations);
       case ModelType::m3D:
-	  return loadModelInfo(model, loaded3D, texLoader);
+	  return loadModelInfo(model, loaded3D, texLoader, pGetAnimations);
       case ModelType::m3D_Anim:
-	  Model userModel = loadModelInfo(model, loadedAnim3D, texLoader);
-	  if(pGetAnimations != nullptr)
-	      for(ModelInfo::Animation anim : model.animations) {
-		  loadedAnim3D.getPreviousModel()->animations
-		      .push_back(ModelAnimation(model.bones, anim));
-		  pGetAnimations->push_back(
-			  loadedAnim3D.getPreviousModel()->
-			  animations[loadedAnim3D.getPreviousModel()->animations.size() - 1]);
-	      }
-	  return userModel;
+	  return loadModelInfo(model, loadedAnim3D, texLoader, pGetAnimations);
       }
       throw std::runtime_error("tried to load model with unrecognized type");
   }
@@ -104,7 +104,7 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
   }
 
   void GLModelRender::DrawModel(Model model, GLTextureLoader* texLoader,
-				uint32_t spriteColourShaderLoc){
+				uint32_t spriteColourShaderLoc) {
       if(model.ID >= loadedModels.size()) {
 	  std::cerr << "model ID out of range" << std::endl;
 	  return;

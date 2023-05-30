@@ -208,11 +208,11 @@ namespace glenv {
 	  break;
       case DrawMode::d3DAnim:
 	  setVPlighting(shader3DAnim);
-	  glUniformMatrix4fv(shader3D->Location("bones"), MAX_BONES, GL_FALSE,
+	  glUniformMatrix4fv(shader3DAnim->Location("bones"), MAX_BONES, GL_FALSE,
 			     &drawCalls[i].d3DAnim.bones[0][0][0]);
-	  glUniformMatrix4fv(shader3D->Location("model"), 1, GL_FALSE,
+	  glUniformMatrix4fv(shader3DAnim->Location("model"), 1, GL_FALSE,
 			     &drawCalls[i].d3DAnim.modelMatrix[0][0]);
-	  glUniformMatrix4fv(shader3D->Location("normal"), 1, GL_FALSE,
+	  glUniformMatrix4fv(shader3DAnim->Location("normal"), 1, GL_FALSE,
 			     &drawCalls[i].d3DAnim.normalMatrix[0][0]);
 	  break;
       }
@@ -236,7 +236,7 @@ namespace glenv {
       int drawCount = 0;
       
       for(unsigned int i = 0; i < currentDraw; i++) {
-	  if(i == 0 || currentMode != drawCalls[i].mode) {
+	  if(i == 0 || currentMode != drawCalls[i].mode || currentMode == DrawMode::d3DAnim) {
 	      if(drawCount > 0) {
 		  switch(currentMode) {
 		  case DrawMode::d2D:
@@ -281,7 +281,7 @@ namespace glenv {
 
 	  case DrawMode::d3DAnim:
 	      currentModel = drawCalls[i].d3DAnim.model;
-	      draw3DAnimBatch(1, currentModel);
+	      draw3DAnim(currentModel);
 	      drawCount = 0;
 	      break;
 	  }
@@ -317,8 +317,8 @@ namespace glenv {
       modelLoader->DrawModelInstanced(model, textureLoader, drawCount, shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
-  void GLRender::draw3DAnimBatch(int drawCount, Resource::Model model) {
-      modelLoader->DrawModelInstanced(model, textureLoader, drawCount, shader3DAnim->Location("spriteColour"), shader3DAnim->Location("enableTex"));
+  void GLRender::draw3DAnim(Resource::Model model) {
+      modelLoader->DrawModel(model, textureLoader, shader3DAnim->Location("spriteColour"));
   }
 
   void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
@@ -336,7 +336,7 @@ namespace glenv {
 	  drawCalls[currentDraw].d3DAnim = DrawAnim3D(model, modelMatrix, normalMatrix);
 	  std::vector<glm::mat4>* bones = animation->getCurrentBones();
 	  for(int i = 0; i < MAX_BONES && i < bones->size(); i++) {
-	      drawCalls[i].d3DAnim.bones[i] = bones->at(i);
+	      drawCalls[currentDraw].d3DAnim.bones[i] = bones->at(i);
 	  }
 	  currentDraw++;
       }

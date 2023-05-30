@@ -13,7 +13,7 @@ namespace Resource
 
   GLTextureLoader::LoadedTex::LoadedTex(std::string path, bool mipmapping, bool pixelated) {
 #ifndef NDEBUG
-  std::cout << "loading texture: " << path;
+      std::cout << "loading texture: " << path << std::endl;
 #endif
   ID = 0;
   width = 0;

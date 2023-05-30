@@ -34,6 +34,8 @@ GLVertexData::GLVertexData(std::vector<Vertex3D> &vertices, std::vector<unsigned
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex3D), (void*)offsetof(Vertex3D, TexCoord));
 }
 
+#include <iostream>
+
 GLVertexData::GLVertexData(std::vector<VertexAnim3D> &vertices, std::vector<unsigned int> &indices) {
     initBuffers(vertices, indices);
 
@@ -47,7 +49,7 @@ GLVertexData::GLVertexData(std::vector<VertexAnim3D> &vertices, std::vector<unsi
     glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexAnim3D),
 			  (void*)offsetof(VertexAnim3D, TexCoord));
     glEnableVertexAttribArray(3);
-    glVertexAttribPointer(3, 4, GL_INT, GL_FALSE, sizeof(VertexAnim3D),
+    glVertexAttribIPointer(3, 4, GL_INT, sizeof(VertexAnim3D),
 			  (void*)offsetof(VertexAnim3D, BoneIDs));
     glEnableVertexAttribArray(4);
     glVertexAttribPointer(4, 4, GL_FLOAT, GL_FALSE, sizeof(VertexAnim3D),

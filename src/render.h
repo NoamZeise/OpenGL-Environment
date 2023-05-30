@@ -93,7 +93,7 @@ namespace glenv {
       void draw2DBatch(int drawCount, Resource::Texture texture,
 		       glm::vec4 currentColour);
       void draw3DBatch(int drawCount, Resource::Model model);
-      void draw3DAnimBatch(int drawCount, Resource::Model model);
+      void draw3DAnim(Resource::Model model);
 
       void setVPlighting(GLShader *shader);
 

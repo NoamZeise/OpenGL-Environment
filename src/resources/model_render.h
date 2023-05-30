@@ -51,7 +51,7 @@ namespace Resource {
       
       template <class T_Vert>
       Model loadModelInfo(ModelInfo::Model& model, ModelGroup<T_Vert>& modelGroup,
-			  GLTextureLoader* texLoader);
+			  GLTextureLoader* texLoader, std::vector<ModelAnimation> *pGetAnimations);
       ModelInfo::Model loadModelFromFile(std::string path);
       template <class T_Vert>
       void addLoadedModel(LoadedModel<T_Vert>* model, GLTextureLoader *texLoader);
