@@ -3,14 +3,12 @@
 
 #include <string.h>
 #include <map>
-#include <iostream>
 #include <vector>
 
 #include <glm/glm.hpp>
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
-#include <graphics/glm_helper.h>
 #include "texture_loader.h"
 
 namespace Resource

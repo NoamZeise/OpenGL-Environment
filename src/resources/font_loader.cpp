@@ -1,4 +1,6 @@
 #include "font_loader.h"
+#include <graphics/glm_helper.h>
+#include <logger.h>
 
 namespace Resource
 {
@@ -6,9 +8,7 @@ namespace Resource
   GLFontLoader::~GLFontLoader()
   {
       for(unsigned int i = 0; i < fonts.size(); i++)
-      {
 	  delete fonts[i];
-      }
   }
 
   Font GLFontLoader::LoadFont(std::string file, GLTextureLoader *texLoader) {
@@ -23,8 +23,8 @@ namespace Resource
                                                  float rotate) {
     std::vector<QuadDraw> draws;
     if (drawfont.ID >= fonts.size()) {
-      std::cout << "font is out of range" << std::endl;
-      return draws;
+	LOG_ERROR("font is out of range");
+	return draws;
     }
     GLFontLoader::LoadedFont *font = fonts[drawfont.ID];
     for (std::string::const_iterator c = text.begin(); c != text.end(); c++) {
@@ -55,7 +55,7 @@ namespace Resource
 
   float GLFontLoader::MeasureString(Font font, std::string text, float size) {
     if (font.ID >= fonts.size()) {
-      std::cout << "font is out of range" << std::endl;
+	LOG_ERROR("font is out of range");
       return 0.0f;
     }
     return fonts[font.ID]->MeasureString(text, size);
@@ -69,10 +69,8 @@ namespace Resource
     std::cout << "loading font: " << file << std::endl;
 #endif
     FT_Library ftlib;
-    if (FT_Init_FreeType(&ftlib)) {
-      std::cout << "failed to load freetype2 library" << std::endl;
-      return;
-    }
+    if (FT_Init_FreeType(&ftlib))
+	throw std::runtime_error("failed to load freetype2 library");
 
     FT_Face face;
     if (FT_New_Face(ftlib, file.c_str(), 0, &face))

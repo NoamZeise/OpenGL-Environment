@@ -3,7 +3,7 @@
 #include <assimp/material.h>
 #include <assimp/types.h>
 #include <assimp/matrix4x4.h>
-#include <iostream>
+#include <logger.h>
 
 namespace Resource
 {
@@ -15,7 +15,6 @@ GLModelRender::~GLModelRender() {
     for(unsigned int i = 0; i < loadedModels.size(); i++)
 	delete loadedModels[i];
 }
-
 
 void GLModelRender::loadQuad() {
     ModelInfo::Model quad = makeQuadModel();
@@ -49,9 +48,8 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 
   ModelInfo::Model GLModelRender::loadModelFromFile(std::string path) {
 #ifndef NO_ASSIMP
-      #ifndef NDEBUG
-      std::cout << "loading model: " << path << std::endl;
-#endif
+      LOG("loading model: " << path);
+
       return modelLoader.LoadModel(path);
 #else
       throw std::runtime_error("tried to load model from file, but NO_ASSIMP is defined"
@@ -106,7 +104,7 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
   void GLModelRender::DrawModel(Model model, GLTextureLoader* texLoader,
 				uint32_t spriteColourShaderLoc) {
       if(model.ID >= loadedModels.size()) {
-	  std::cerr << "model ID out of range" << std::endl;
+	  LOG_ERROR("model ID out of range");
 	  return;
       }
 
@@ -123,7 +121,7 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 					 int count, uint32_t spriteColourShaderLoc,
 					 uint32_t enableTexShaderLoc) {
       if(model.ID >= loadedModels.size()) {
-	  std::cerr << "model ID out of range" << std::endl;
+	  LOG_ERROR("model ID out of range");
 	  return;
       }
 

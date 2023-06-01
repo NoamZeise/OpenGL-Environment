@@ -9,6 +9,7 @@
 #include "resources/model_render.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
+#include <logger.h>
 #include <stdexcept>
 
 namespace glenv {
@@ -34,8 +35,9 @@ namespace glenv {
 
       if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	  throw std::runtime_error("failed to load glad");
+      LOG("glad loaded")
 
-      glEnable(GL_DEPTH_TEST);
+	  glEnable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_CULL_FACE);
@@ -54,19 +56,22 @@ namespace glenv {
       flatShader->Use();
       glUniform1i(flatShader->Location("image"), 0);
 
+      LOG("shaders loaded");
+      
       view2D = glm::mat4(1.0f);
   
       ogl_helper::createShaderStorageBuffer(&model3DSSBO, sizeAndPtr(perInstance3DModel));
       ogl_helper::createShaderStorageBuffer(&normal3DSSBO, sizeAndPtr(perInstance3DNormal));
       ogl_helper::createShaderStorageBuffer(&model2DSSBO, sizeAndPtr(perInstance2DModel));  
       ogl_helper::createShaderStorageBuffer(&texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset));
+      LOG("shader buffers created");
       
       setupStagingResourceLoaders();
       FramebufferResize();
+      LOG("renderer initialized");
   }
 
-  GLRender::~GLRender()
-  {
+  GLRender::~GLRender() {
       delete shader3D;
       delete shader3DAnim;
       delete flatShader;
@@ -128,6 +133,7 @@ namespace glenv {
       fontLoader = stagingFontLoader;
       modelLoader = stagingModelLoader;
       setupStagingResourceLoaders();
+      LOG("resources loaded");
   }
 
   GLRender::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset) {
@@ -218,14 +224,14 @@ namespace glenv {
       }
   }
 
-#define DRAW_BATCH()				\
-  if(drawCount > 0) {				\
-      switch(currentMode) {			\
-      case DrawMode::d2D:					     \
-	  draw2DBatch(drawCount, currentTexture, currentColour);     \
-	  break;						     \
-      case DrawMode::d3D:					     \
-	  draw3DBatch(drawCount, currentModel);			     \
+#define DRAW_BATCH()							\
+  if(drawCount > 0) {							\
+      switch(currentMode) {						\
+      case DrawMode::d2D:						\
+	  draw2DBatch(drawCount, currentTexture, currentColour);	\
+	  break;							\
+      case DrawMode::d3D:						\
+	  draw3DBatch(drawCount, currentModel);				\
 	  break;							\
       default:								\
 	  throw std::runtime_error("ogl_DRAW_BATCH unknown mode to batch draw!"); \
@@ -293,7 +299,7 @@ namespace glenv {
       }
       DRAW_BATCH()
 	  
-      glfwSwapBuffers(window);
+	  glfwSwapBuffers(window);
       submit = true;
   }
 
@@ -325,8 +331,8 @@ namespace glenv {
   }
 
   void GLRender::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
-		     glm::mat4 normalMatrix,
-		     Resource::ModelAnimation *animation) {
+			       glm::mat4 normalMatrix,
+			       Resource::ModelAnimation *animation) {
       if(currentDraw < MAX_DRAWS) {
 	  drawCalls[currentDraw].mode = DrawMode::d3DAnim;
 	  drawCalls[currentDraw].d3DAnim = DrawAnim3D(model, modelMatrix, normalMatrix);
@@ -370,8 +376,8 @@ namespace glenv {
       return fontLoader->MeasureString(font, text, size);
   }
 
-  void GLRender::FramebufferResize()
-  {
+  void GLRender::FramebufferResize() {
+      LOG("resizing framebuffer");
       int width, height;
       glfwGetWindowSize(window, &width, &height);
       glViewport(0, 0, width, height);
@@ -394,8 +400,7 @@ namespace glenv {
       set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
   }
 
-  void GLRender::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos)
-  {
+  void GLRender::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
       this->fov = fov;
       view3D = view;
       proj3D = glm::perspective(glm::radians(fov),
@@ -403,8 +408,7 @@ namespace glenv {
       lighting.camPos = camPos;
   }
 
-  void GLRender::set2DViewMatrixAndScale(glm::mat4 view, float scale)
-  {
+  void GLRender::set2DViewMatrixAndScale(glm::mat4 view, float scale) {
       view2D = view;
       scale2D = scale;
   }

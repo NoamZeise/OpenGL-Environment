@@ -1,6 +1,7 @@
 #include "framebuffer.h"
 
 #include <stdexcept>
+#include <logger.h>
 #include "ogl_helper.h"
 
 GLuint genDepthStencilRenderBuffer(GLsizei width, GLsizei height) {
@@ -28,6 +29,7 @@ Framebuffer::Framebuffer(GLsizei width, GLsizei height) {
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	throw std::runtime_error("failed to create opengl framebuffer!");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    LOG("Created framebuffer");
 }
 
 Framebuffer::~Framebuffer() {
