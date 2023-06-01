@@ -218,6 +218,20 @@ namespace glenv {
       }
   }
 
+#define DRAW_BATCH()				\
+  if(drawCount > 0) {				\
+      switch(currentMode) {			\
+      case DrawMode::d2D:					     \
+	  draw2DBatch(drawCount, currentTexture, currentColour);     \
+	  break;						     \
+      case DrawMode::d3D:					     \
+	  draw3DBatch(drawCount, currentModel);			     \
+	  break;							\
+      default:								\
+	  throw std::runtime_error("ogl_DRAW_BATCH unknown mode to batch draw!"); \
+      }									\
+  }
+
   void GLRender::EndDraw(std::atomic<bool>& submit) {
       inDraw = false;
       glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -237,16 +251,7 @@ namespace glenv {
       
       for(unsigned int i = 0; i < currentDraw; i++) {
 	  if(i == 0 || currentMode != drawCalls[i].mode || currentMode == DrawMode::d3DAnim) {
-	      if(drawCount > 0) {
-		  switch(currentMode) {
-		  case DrawMode::d2D:
-		      draw2DBatch(drawCount, currentTexture, currentColour);
-		      break;
-		  case DrawMode::d3D:
-		      draw3DBatch(drawCount, currentModel);
-		  break;
-		  }
-	      }
+	      DRAW_BATCH();
 	      drawCount = 0;
 	      currentMode = drawCalls[i].mode;
 	      setShaderForMode(currentMode, i);
@@ -286,16 +291,7 @@ namespace glenv {
 	      break;
 	  }
       }
-      if(drawCount > 0) {
-	  switch(currentMode) {
-	  case DrawMode::d2D:
-	      draw2DBatch(drawCount, currentTexture, currentColour);
-	      break;
-	  case DrawMode::d3D:
-	      draw3DBatch(drawCount, currentModel);
-	      break;
-	  }
-      }
+      DRAW_BATCH()
 	  
       glfwSwapBuffers(window);
       submit = true;
@@ -335,9 +331,8 @@ namespace glenv {
 	  drawCalls[currentDraw].mode = DrawMode::d3DAnim;
 	  drawCalls[currentDraw].d3DAnim = DrawAnim3D(model, modelMatrix, normalMatrix);
 	  std::vector<glm::mat4>* bones = animation->getCurrentBones();
-	  for(int i = 0; i < MAX_BONES && i < bones->size(); i++) {
+	  for(int i = 0; i < MAX_BONES && i < bones->size(); i++)
 	      drawCalls[currentDraw].d3DAnim.bones[i] = bones->at(i);
-	  }
 	  currentDraw++;
       }
   }

@@ -9,25 +9,12 @@ layout(location = 0) out vec2 outTexCoord;
 layout(location = 1) out vec3 outFragPos;
 layout(location = 2) out vec3 outNormal;
 
-
-const int MAX_3D_INSTANCE = 10000;
-
-layout (std430, binding = 2) buffer perInstanceModelData
-{
-  mat4 model[MAX_3D_INSTANCE];
-};
-
-layout (std430, binding = 3) buffer perInstanceNormalData
-{
-  mat4 normalMat[MAX_3D_INSTANCE];
-};
-
+uniform mat4 model;
+uniform mat4 normal;
+uniform mat4 view;
+uniform mat4 projection;
 const int MAX_BONES = 50;
 uniform mat4 bones[MAX_BONES];
-
-
-uniform mat4 view;
-uniform mat4 proj;
 
 void main()
 {
@@ -41,8 +28,8 @@ void main()
       skin += inWeights[i] * bones[inBoneIDs[i]];
     }
 
-    vec4 fragPos = model[gl_InstanceID] * skin * vec4(inPos, 1.0f);
-    outNormal = (pid.data[gl_InstanceID].normalMat * skin * vec4(inNormal, 1.0f)).xyz;
+    vec4 fragPos = model * skin * vec4(inPos, 1.0f);
+    outNormal = (normal * skin * vec4(inNormal, 1.0f)).xyz;
 
     gl_Position = projection * view * fragPos;
     outFragPos = vec3(fragPos) / fragPos.w;

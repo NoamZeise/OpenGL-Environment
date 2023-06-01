@@ -8,6 +8,8 @@
 
 #include <resource_loader/stb_image.h>
 
+#include "../ogl_helper.h"
+
 namespace Resource
 {
 
@@ -39,7 +41,7 @@ GLTextureLoader::LoadedTex::LoadedTex(unsigned char *data, int width,
 void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
                                                  int height, int nrChannels,
 						 bool mipmapping, bool pixelated) {
-  unsigned int format = GL_RGBA;
+  GLuint format = GL_RGBA;
   if (nrChannels == 1)
     format = GL_RED;
   else if (nrChannels == 3)
@@ -51,29 +53,14 @@ void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
               << std::endl;
     return;
   }
-
-  glGenTextures(1, &ID);
-  glBindTexture(GL_TEXTURE_2D, ID);
-  glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format,
-               GL_UNSIGNED_BYTE, data);
-  if (mipmapping)
-    glGenerateMipmap(GL_TEXTURE_2D);
-
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-  if (pixelated) {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  } else {
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  }
+  
+  ID = ogl_helper::genTexture(format, width, height, data, mipmapping,
+			      pixelated ? GL_NEAREST : GL_LINEAR);
 }
 
-GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &ID); }
-
-void GLTextureLoader::LoadedTex::Bind() { glBindTexture(GL_TEXTURE_2D, ID); }
+  GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &ID); }
+  
+  void GLTextureLoader::LoadedTex::Bind() { glBindTexture(GL_TEXTURE_2D, ID); }
 
   GLTextureLoader::GLTextureLoader(bool mipmapping, bool pixelated) {
     this->mipmapping = mipmapping;
@@ -81,9 +68,8 @@ void GLTextureLoader::LoadedTex::Bind() { glBindTexture(GL_TEXTURE_2D, ID); }
   }
 
 GLTextureLoader::~GLTextureLoader() {
-  for (unsigned int i = 0; i < textures.size(); i++) {
+  for (unsigned int i = 0; i < textures.size(); i++)
     delete textures[i];
-  }
 }
 
 Texture GLTextureLoader::LoadTexture(std::string path) {
