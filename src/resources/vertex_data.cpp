@@ -56,27 +56,23 @@ GLVertexData::GLVertexData(std::vector<VertexAnim3D> &vertices, std::vector<unsi
 			  (void*)offsetof(VertexAnim3D, Weights));
 }
 
-GLVertexData::~GLVertexData()
-{
+GLVertexData::~GLVertexData() {
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &VAO);
 }
 
-void GLVertexData::Draw(unsigned int mode)
-{
+void GLVertexData::Draw(unsigned int mode) {
 	glBindVertexArray(VAO);
 	glDrawElements(mode, size, GL_UNSIGNED_INT, 0);
 }
 
-void GLVertexData::DrawInstanced(unsigned int mode, int count)
-{
+void GLVertexData::DrawInstanced(unsigned int mode, int count) {
 	glBindVertexArray(VAO);
 	glDrawElementsInstanced(mode, size, GL_UNSIGNED_INT, 0, count);
 }
 
-void GLVertexData::Draw(unsigned int mode, unsigned int verticies)
-{
+void GLVertexData::Draw(unsigned int mode, unsigned int verticies) {
 	if (verticies > size)
 		verticies = size;
 	glBindVertexArray(VAO);

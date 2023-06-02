@@ -10,6 +10,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <logger.h>
+#include <graphics/glm_helper.h>
 #include <stdexcept>
 
 namespace glenv {
@@ -35,13 +36,12 @@ namespace glenv {
 
       if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	  throw std::runtime_error("failed to load glad");
-      LOG("glad loaded")
+      LOG("glad loaded");
 
-	  glEnable(GL_DEPTH_TEST);
+      glEnable(GL_DEPTH_TEST);
       glEnable(GL_BLEND);
       glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       glEnable(GL_CULL_FACE);
-
 
       shader3D = new GLShader("shaders/opengl/3D-lighting.vert", "shaders/opengl/blinnphong.frag");
       shader3D->Use();
@@ -55,6 +55,11 @@ namespace glenv {
       flatShader = new GLShader("shaders/opengl/flat.vert", "shaders/opengl/flat.frag");
       flatShader->Use();
       glUniform1i(flatShader->Location("image"), 0);
+
+      finalShader = new GLShader("shaders/opengl/final.vert", "shaders/opengl/final.frag");
+      finalShader->Use();
+      glUniformMatrix4fv(finalShader->Location("screenTransform"),
+			 1, GL_FALSE, &finalTransform[0][0]);
 
       LOG("shaders loaded");
       
@@ -75,6 +80,7 @@ namespace glenv {
       delete shader3D;
       delete shader3DAnim;
       delete flatShader;
+      delete finalShader;
       delete textureLoader;
       delete fontLoader;
       delete modelLoader;
@@ -82,8 +88,7 @@ namespace glenv {
 
   void GLRender::setupStagingResourceLoaders() {
       stagingTextureLoader = new Resource::GLTextureLoader(
-	      true, false //mipmapping, nearest image filter
-							   );
+	      true, true); //mipmapping, nearest image filter
       stagingFontLoader = new Resource::GLFontLoader();
       stagingModelLoader = new Resource::GLModelRender();
       stagingTextureLoader->LoadTexture("textures/error.png");
@@ -184,7 +189,6 @@ namespace glenv {
 			 &proj3D[0][0]);
       glUniformMatrix4fv(shader->Location("view"), 1, GL_FALSE,
 			 &view3D[0][0]);
-      
       glUniform4fv(shader->Location("lighting.ambient"), 1,
 		   &lighting.ambient[0]);
       glUniform4fv(shader->Location("lighting.diffuse"), 1,
@@ -240,9 +244,15 @@ namespace glenv {
 
   void GLRender::EndDraw(std::atomic<bool>& submit) {
       inDraw = false;
+
+      if(useOffscreenFramebuffer) {
+	  offscreenFramebuffer->bind();
+	  glEnable(GL_DEPTH_TEST);
+	  glViewport(0, 0, (GLsizei)targetResolution.x, (GLsizei)targetResolution.y);
+      }
       glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+      
       if(currentDraw == 0) {
 	  glfwSwapBuffers(window);
 	  submit = true;
@@ -297,9 +307,22 @@ namespace glenv {
 	      break;
 	  }
       }
-      DRAW_BATCH()
+      
+      DRAW_BATCH();
+
+      if(useOffscreenFramebuffer) {
+	  glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	  glClear(GL_COLOR_BUFFER_BIT);
+	  glViewport(0, 0, (GLsizei)windowResolution.x, (GLsizei)windowResolution.y);
 	  
-	  glfwSwapBuffers(window);
+	  finalShader->Use();
+	  glDisable(GL_DEPTH_TEST);
+	  glBindTexture(GL_TEXTURE_2D, offscreenFramebuffer->texture());
+	  glDrawArrays(GL_TRIANGLES, 0, 3);
+      }
+      
+      glfwSwapBuffers(window);
       submit = true;
   }
 
@@ -377,16 +400,31 @@ namespace glenv {
   }
 
   void GLRender::FramebufferResize() {
-      LOG("resizing framebuffer");
       int width, height;
-      glfwGetWindowSize(window, &width, &height);
+      glfwGetFramebufferSize(window, &width, &height);
+      windowResolution = glm::vec2((float)width, (float)height);
       glViewport(0, 0, width, height);
+      LOG("resizing framebuffer, window width: " << width << "  height:" << height);
+      
+      if(!forceTargetResolution)
+	  targetResolution = windowResolution;
 
-      float deviceRatio = (float)width /
-	  (float)height;
+      if(useOffscreenFramebuffer) {
+	  if(offscreenFramebuffer != nullptr)
+	      delete offscreenFramebuffer;
+	  offscreenFramebuffer = new Framebuffer((GLsizei)targetResolution.x,
+						 (GLsizei)targetResolution.y);
+	  
+	  finalShader->Use();
+	  finalTransform = glmhelper::calcFinalOffset(targetResolution, windowResolution);
+	  glUniformMatrix4fv(finalShader->Location("screenTransform"),
+			     1, GL_FALSE, &finalTransform[0][0]);
+      }
+      
+      float deviceRatio = (float)width / (float)height;
       float virtualRatio = targetResolution.x / targetResolution.y;
-      float xCorrection = width / targetResolution.x;
-      float yCorrection = height / targetResolution.y;
+      float xCorrection = targetResolution.x / targetResolution.x;
+      float yCorrection = targetResolution.y / targetResolution.y;
 
       float correction;
       if (virtualRatio < deviceRatio) {
@@ -395,16 +433,23 @@ namespace glenv {
 	  correction = xCorrection;
       }
       proj2D = glm::ortho(
-	      0.0f, (float)width*scale2D / correction, (float)height*scale2D / correction, 0.0f, -10.0f, 10.0f);
+	      0.0f,
+	      (float)targetResolution.x * scale2D / correction,
+	      (float)targetResolution.y * scale2D / correction,
+	      0.0f, -10.0f, 10.0f);
 
       set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
+      LOG("framebuffer resized");
   }
 
   void GLRender::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
       this->fov = fov;
       view3D = view;
-      proj3D = glm::perspective(glm::radians(fov),
-				(targetResolution.x / targetResolution.y), 0.1f, 500.0f);
+
+      float ratio = forceTargetResolution ? targetResolution.x / targetResolution.y :
+	  windowResolution.x / windowResolution.y;
+      
+      proj3D = glm::perspective(glm::radians(fov), ratio, 0.1f, 1000.0f);
       lighting.camPos = camPos;
   }
 

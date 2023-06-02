@@ -13,7 +13,7 @@ namespace ogl_helper {
 				 GLuint bufferBaseSize);
 
     GLuint genTexture(GLuint format, GLsizei width, GLsizei height, unsigned char* data,
-		    bool mipmapping, int filtering);
+		      bool mipmapping, int filtering, int adressingMode);
     
 }
 

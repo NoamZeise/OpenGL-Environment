@@ -18,7 +18,7 @@ void createShaderStorageBuffer(GLuint* glBuffer, size_t bufferSize, void* pBuffe
   }
 
   GLuint genTexture(GLuint format, GLsizei width, GLsizei height, unsigned char* data,
-		  bool mipmapping, int filtering) {
+		    bool mipmapping, int filtering, int addressingMode) {
       GLuint texture;
       glGenTextures(1, &texture);
       glBindTexture(GL_TEXTURE_2D, texture);
@@ -27,8 +27,8 @@ void createShaderStorageBuffer(GLuint* glBuffer, size_t bufferSize, void* pBuffe
       if(mipmapping)
 	  glGenerateMipmap(GL_TEXTURE_2D);
       
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, addressingMode);
+      glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, addressingMode);
 
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filtering);
       glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filtering);

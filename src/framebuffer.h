@@ -7,7 +7,8 @@ class Framebuffer {
  public:
     Framebuffer(GLsizei width, GLsizei height);
     ~Framebuffer();
-
+    void bind();
+    GLuint texture();
  private:
     GLuint framebuffer;
     GLuint texBuff;

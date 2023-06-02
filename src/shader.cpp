@@ -18,8 +18,8 @@ namespace glenv {
       //create shader
       unsigned int vShader, fShader;
 
-      vShader = compileShader(VertexShaderPath, false);
-      fShader = compileShader(FragmentShaderPath, true);
+      vShader = compileShader(VertexShaderPath, GL_VERTEX_SHADER);
+      fShader = compileShader(FragmentShaderPath, GL_FRAGMENT_SHADER);
 
       shaderProgram = glCreateProgram();
       glAttachShader(shaderProgram, vShader);
@@ -51,16 +51,13 @@ namespace glenv {
       glDeleteProgram(shaderProgram);
   }
 
-  unsigned int GLShader::compileShader(const char* path, bool isFragmentShader) {
+  unsigned int GLShader::compileShader(const char* path, int shaderType) {
       std::string dir = path;
-      unsigned int shader;
-      if (isFragmentShader)
-	  shader = glCreateShader(GL_FRAGMENT_SHADER);
-      else
-	  shader = glCreateShader(GL_VERTEX_SHADER);
+      unsigned int shader = glCreateShader(shaderType);
 
       std::ifstream in(path);
-      std::string shaderSource((std::istreambuf_iterator<char>(in)), std::istreambuf_iterator<char>());
+      std::string shaderSource((std::istreambuf_iterator<char>(in)),
+			       std::istreambuf_iterator<char>());
       in.close();
       const char* source = shaderSource.c_str();
 	

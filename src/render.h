@@ -13,6 +13,8 @@
 
 #include <graphics/resources.h>
 
+#include "framebuffer.h"
+
 namespace Resource {
     class GLTextureLoader;
     class GLModelRender;
@@ -116,6 +118,7 @@ namespace glenv {
       LightingParameters lighting;
 
       GLFWwindow *window;
+      glm::vec2 windowResolution;
       glm::vec2 targetResolution;
 
       bool forceTargetResolution = false;
@@ -124,7 +127,13 @@ namespace glenv {
       GLShader *shader3D;
       GLShader *shader3DAnim;
       GLShader *flatShader;
+      GLShader *finalShader;
 
+      bool useOffscreenFramebuffer = true;
+      Framebuffer* offscreenFramebuffer = nullptr;
+
+      glm::mat4 finalTransform = glm::mat4(1.0f);
+      
       float scale2D = 1.0f; // TODO make 2D scale work
       glm::mat4 proj2D;
       glm::mat4 view2D;

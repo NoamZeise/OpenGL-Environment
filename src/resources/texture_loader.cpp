@@ -48,7 +48,7 @@ void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
   }
   
   ID = ogl_helper::genTexture(format, width, height, data, mipmapping,
-			      pixelated ? GL_NEAREST : GL_LINEAR);
+			      pixelated ? GL_NEAREST : GL_LINEAR, GL_REPEAT);
 }
 
   GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &ID); }

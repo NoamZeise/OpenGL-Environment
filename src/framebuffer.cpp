@@ -17,7 +17,8 @@ Framebuffer::Framebuffer(GLsizei width, GLsizei height) {
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
     
-    texBuff = ogl_helper::genTexture(GL_RGB, width, height, 0, false, GL_NEAREST);
+    texBuff = ogl_helper::genTexture(GL_RGB, width, height, 0, false,
+				     GL_NEAREST, GL_CLAMP_TO_BORDER);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, texBuff, 0);
     depthStencilBuff = genDepthStencilRenderBuffer(width, height);
     glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT,
@@ -29,11 +30,19 @@ Framebuffer::Framebuffer(GLsizei width, GLsizei height) {
     if(glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
 	throw std::runtime_error("failed to create opengl framebuffer!");
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    LOG("Created framebuffer");
+    LOG("created framebuffer, width: " << width << "  height:" << height);
 }
 
 Framebuffer::~Framebuffer() {
     glDeleteFramebuffers(1, &framebuffer);
     glDeleteRenderbuffers(1, &depthStencilBuff);
     glDeleteTextures(1, &texBuff);
+}
+
+void Framebuffer::bind() {
+    glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
+}
+
+GLuint Framebuffer::texture() {
+    return texBuff;
 }
