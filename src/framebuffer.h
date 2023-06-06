@@ -5,13 +5,14 @@
 
 class Framebuffer {
  public:
-    Framebuffer(GLsizei width, GLsizei height);
+    Framebuffer(GLsizei width, GLsizei height, bool multisampling, bool depthBuffer);
     ~Framebuffer();
-    void bind();
+    GLuint id();
     GLuint texture();
  private:
     GLuint framebuffer;
     GLuint texBuff;
+    GLuint colourBuff;
     GLuint depthStencilBuff;
 };
 

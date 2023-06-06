@@ -12,6 +12,7 @@
 #include <iostream>
 
 #include <graphics/resources.h>
+#include <graphics/render_config.h>
 
 #include "framebuffer.h"
 
@@ -116,13 +117,11 @@ namespace glenv {
       };
 
       LightingParameters lighting;
+      RenderConfig renderConf;
 
       GLFWwindow *window;
       glm::vec2 windowResolution;
       glm::vec2 targetResolution;
-
-      bool forceTargetResolution = false;
-      bool vsync = true;
 
       GLShader *shader3D;
       GLShader *shader3DAnim;
@@ -131,6 +130,8 @@ namespace glenv {
 
       bool useOffscreenFramebuffer = true;
       Framebuffer* offscreenFramebuffer = nullptr;
+      Framebuffer* offscreenBlitFramebuffer = nullptr;
+      int msaaSamples = 1;
 
       glm::mat4 finalTransform = glm::mat4(1.0f);
       
@@ -190,6 +191,8 @@ namespace glenv {
 	  Draw3D d3D;
 	  DrawAnim3D d3DAnim;
       };
+
+      
 
       DrawMode currentDrawMode = DrawMode::d2D;
       unsigned int currentDraw = 0;

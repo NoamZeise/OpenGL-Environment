@@ -8,10 +8,9 @@
 
 #include "../ogl_helper.h"
 
-namespace Resource
-{
+namespace Resource {
 
-  GLTextureLoader::LoadedTex::LoadedTex(std::string path, bool mipmapping, bool pixelated) {
+  GLTextureLoader::LoadedTex::LoadedTex(std::string path, bool mipmapping, bool filterNearest) {
       LOG("loading texture: " << path);
       ID = 0;
       width = 0;
@@ -23,18 +22,18 @@ namespace Resource
 	  LOG_ERROR("stb_image: failed to load texture at " << path);
 	  return;
       }
-      generateTexture(data, width, height, nrChannels, mipmapping, pixelated);   
+      generateTexture(data, width, height, nrChannels, mipmapping, filterNearest);   
       stbi_image_free(data);
   }
 
 GLTextureLoader::LoadedTex::LoadedTex(unsigned char *data, int width,
-                                      int height, int nrChannels, bool mipmapping, bool pixelated) {
-  generateTexture(data, width, height, nrChannels, mipmapping, pixelated);
+                                      int height, int nrChannels, bool mipmapping, bool filterNearest) {
+  generateTexture(data, width, height, nrChannels, mipmapping, filterNearest);
 }
 
 void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
                                                  int height, int nrChannels,
-						 bool mipmapping, bool pixelated) {
+						 bool mipmapping, bool filterNearest) {
   GLuint format = GL_RGBA;
   if (nrChannels == 1)
     format = GL_RED;
@@ -48,7 +47,8 @@ void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
   }
   
   ID = ogl_helper::genTexture(format, width, height, data, mipmapping,
-			      pixelated ? GL_NEAREST : GL_LINEAR, GL_REPEAT);
+			      filterNearest ? GL_NEAREST : GL_LINEAR,
+			      GL_REPEAT, 1);
 }
 
   GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &ID); }
@@ -57,7 +57,7 @@ void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
 
   GLTextureLoader::GLTextureLoader(bool mipmapping, bool pixelated) {
     this->mipmapping = mipmapping;
-    this->pixelated = pixelated;
+    this->filterNearest = pixelated;
   }
 
 GLTextureLoader::~GLTextureLoader() {
@@ -66,7 +66,7 @@ GLTextureLoader::~GLTextureLoader() {
 }
 
 Texture GLTextureLoader::LoadTexture(std::string path) {
-  textures.push_back(new LoadedTex(path, mipmapping, pixelated));
+  textures.push_back(new LoadedTex(path, mipmapping, filterNearest));
   return Texture((unsigned int)(textures.size() - 1),
                  glm::vec2(textures.back()->width, textures.back()->height),
                  path);
@@ -74,7 +74,7 @@ Texture GLTextureLoader::LoadTexture(std::string path) {
 
 Texture GLTextureLoader::LoadTexture(unsigned char *data, int width, int height,
                                      int nrChannels) {
-  textures.push_back(new LoadedTex(data, width, height, nrChannels, mipmapping, pixelated));
+  textures.push_back(new LoadedTex(data, width, height, nrChannels, mipmapping, filterNearest));
   return Texture((unsigned int)(textures.size() - 1),
                  glm::vec2(textures.back()->width, textures.back()->height),
                  "FONT");

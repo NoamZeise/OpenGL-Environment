@@ -12,8 +12,9 @@ namespace ogl_helper {
     void shaderStorageBufferData(GLuint glBuffer, size_t bufferSize, void* pBufferArray,
 				 GLuint bufferBaseSize);
 
+    /// samples = 1 means no multisamping
     GLuint genTexture(GLuint format, GLsizei width, GLsizei height, unsigned char* data,
-		      bool mipmapping, int filtering, int adressingMode);
+		      bool mipmapping, int filtering, int adressingMode, unsigned int samples);
     
 }
 

@@ -77,6 +77,11 @@ namespace glenv {
   }
 
   GLRender::~GLRender() {
+      if(useOffscreenFramebuffer) {
+	  delete offscreenFramebuffer;
+	  if(offscreenBlitFramebuffer != nullptr)
+	      delete offscreenBlitFramebuffer;
+      }
       delete shader3D;
       delete shader3DAnim;
       delete flatShader;
@@ -88,7 +93,7 @@ namespace glenv {
 
   void GLRender::setupStagingResourceLoaders() {
       stagingTextureLoader = new Resource::GLTextureLoader(
-	      true, true); //mipmapping, nearest image filter
+	      renderConf.mip_mapping, renderConf.texture_filter_nearest);
       stagingFontLoader = new Resource::GLFontLoader();
       stagingModelLoader = new Resource::GLModelRender();
       stagingTextureLoader->LoadTexture("textures/error.png");
@@ -246,7 +251,7 @@ namespace glenv {
       inDraw = false;
 
       if(useOffscreenFramebuffer) {
-	  offscreenFramebuffer->bind();
+	  glBindFramebuffer(GL_FRAMEBUFFER, offscreenFramebuffer->id());
 	  glEnable(GL_DEPTH_TEST);
 	  glViewport(0, 0, (GLsizei)targetResolution.x, (GLsizei)targetResolution.y);
       }
@@ -311,6 +316,18 @@ namespace glenv {
       DRAW_BATCH();
 
       if(useOffscreenFramebuffer) {
+	  if(renderConf.multisampling) {
+	      glBindFramebuffer(GL_DRAW_FRAMEBUFFER, offscreenBlitFramebuffer->id());
+	      glBindFramebuffer(GL_READ_FRAMEBUFFER, offscreenFramebuffer->id());
+	      glDrawBuffer(GL_BACK);
+	      glBlitFramebuffer(0, 0,
+				(GLsizei)targetResolution.x,
+				(GLsizei)targetResolution.y,
+				0, 0,
+				(GLsizei)targetResolution.x,
+				(GLsizei)targetResolution.y,
+				GL_COLOR_BUFFER_BIT, GL_LINEAR);
+	  }
 	  glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 	  glClear(GL_COLOR_BUFFER_BIT);
@@ -318,7 +335,9 @@ namespace glenv {
 	  
 	  finalShader->Use();
 	  glDisable(GL_DEPTH_TEST);
-	  glBindTexture(GL_TEXTURE_2D, offscreenFramebuffer->texture());
+	  glBindTexture(GL_TEXTURE_2D, renderConf.multisampling ?
+			offscreenBlitFramebuffer->texture() :
+			offscreenFramebuffer->texture());
 	  glDrawArrays(GL_TRIANGLES, 0, 3);
       }
       
@@ -339,7 +358,9 @@ namespace glenv {
   void GLRender::draw3DBatch(int drawCount, Resource::Model model) {
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
-      modelLoader->DrawModelInstanced(model, textureLoader, drawCount, shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
+      modelLoader->DrawModelInstanced(
+	      model, textureLoader, drawCount,
+	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
   void GLRender::draw3DAnim(Resource::Model model) {
@@ -385,10 +406,8 @@ namespace glenv {
   void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position,
 			    float size, float depth, glm::vec4 colour, float rotate) {
       auto draws = fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
-
-      for(const auto &draw: draws) {
+      for(const auto &draw: draws) 
 	  DrawQuad(draw.tex, draw.model, draw.colour);
-      }
   }
 
   void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour) {
@@ -400,43 +419,48 @@ namespace glenv {
   }
 
   void GLRender::FramebufferResize() {
+      glfwSwapInterval(renderConf.vsync ? 1 : 0);
       int width, height;
       glfwGetFramebufferSize(window, &width, &height);
       windowResolution = glm::vec2((float)width, (float)height);
       glViewport(0, 0, width, height);
       LOG("resizing framebuffer, window width: " << width << "  height:" << height);
       
-      if(!forceTargetResolution)
+      if(!renderConf.force_target_resolution)
 	  targetResolution = windowResolution;
+
+      if(renderConf.multisampling)
+	  glEnable(GL_MULTISAMPLE);
+      else
+	  glDisable(GL_MULTISAMPLE);
 
       if(useOffscreenFramebuffer) {
 	  if(offscreenFramebuffer != nullptr)
 	      delete offscreenFramebuffer;
 	  offscreenFramebuffer = new Framebuffer((GLsizei)targetResolution.x,
-						 (GLsizei)targetResolution.y);
-	  
+						 (GLsizei)targetResolution.y,
+						 renderConf.multisampling, true);
+	  if(renderConf.multisampling) {
+	      if(offscreenBlitFramebuffer != nullptr)
+		  delete offscreenBlitFramebuffer;
+	      glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
+	      offscreenBlitFramebuffer = new Framebuffer((GLsizei)targetResolution.x,
+							 (GLsizei)targetResolution.y,
+							 false, false);
+	  }
 	  finalShader->Use();
 	  finalTransform = glmhelper::calcFinalOffset(targetResolution, windowResolution);
 	  glUniformMatrix4fv(finalShader->Location("screenTransform"),
 			     1, GL_FALSE, &finalTransform[0][0]);
       }
       
-      float deviceRatio = (float)width / (float)height;
-      float virtualRatio = targetResolution.x / targetResolution.y;
-      float xCorrection = targetResolution.x / targetResolution.x;
-      float yCorrection = targetResolution.y / targetResolution.y;
-
-      float correction;
-      if (virtualRatio < deviceRatio) {
-	  correction = yCorrection;
-      } else {
-	  correction = xCorrection;
-      }
       proj2D = glm::ortho(
 	      0.0f,
-	      (float)targetResolution.x * scale2D / correction,
-	      (float)targetResolution.y * scale2D / correction,
-	      0.0f, -10.0f, 10.0f);
+	      (float)targetResolution.x * scale2D,
+	      (float)targetResolution.y * scale2D,
+	      0.0f,
+	      renderConf.depth_range_2D[0],
+	      renderConf.depth_range_2D[1]);
 
       set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
       LOG("framebuffer resized");
@@ -446,10 +470,13 @@ namespace glenv {
       this->fov = fov;
       view3D = view;
 
-      float ratio = forceTargetResolution ? targetResolution.x / targetResolution.y :
+      float ratio = renderConf.force_target_resolution ?
+	  targetResolution.x / targetResolution.y :
 	  windowResolution.x / windowResolution.y;
       
-      proj3D = glm::perspective(glm::radians(fov), ratio, 0.1f, 1000.0f);
+      proj3D = glm::perspective(glm::radians(fov), ratio,
+				renderConf.depth_range_3D[0],
+				renderConf.depth_range_3D[1]);
       lighting.camPos = camPos;
   }
 
@@ -459,17 +486,17 @@ namespace glenv {
   }
 
   void GLRender::setForceTargetRes(bool force) {
-      if(forceTargetResolution != force) {
-	  forceTargetResolution = force;
+      if(renderConf.force_target_resolution != force) {
+	  renderConf.force_target_resolution = force;
 	  FramebufferResize();
       }
   }
   
-  bool GLRender::isTargetResForced() { return forceTargetResolution; }
+  bool GLRender::isTargetResForced() { return renderConf.force_target_resolution; }
 
   void GLRender::setTargetResolution(glm::vec2 resolution) {
       targetResolution = resolution;
-      forceTargetResolution = true;
+      renderConf.force_target_resolution = true;
       FramebufferResize();
   }
 
@@ -480,10 +507,10 @@ namespace glenv {
   }
   
   void GLRender::setVsync(bool vsync) {
-      this->vsync = vsync;
+      renderConf.vsync = vsync;
       FramebufferResize();
   }
 
-  bool GLRender::getVsync() { return this->vsync; }
+  bool GLRender::getVsync() { return renderConf.vsync; }
   
 }//namespace
