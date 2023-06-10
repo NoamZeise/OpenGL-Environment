@@ -336,8 +336,8 @@ namespace glenv {
 	  finalShader->Use();
 	  glDisable(GL_DEPTH_TEST);
 	  glBindTexture(GL_TEXTURE_2D, renderConf.multisampling ?
-			offscreenBlitFramebuffer->texture() :
-			offscreenFramebuffer->texture());
+			offscreenBlitFramebuffer->textureId(0) :
+			offscreenFramebuffer->textureId(0));
 	  glDrawArrays(GL_TRIANGLES, 0, 3);
       }
       
@@ -429,24 +429,38 @@ namespace glenv {
       if(!renderConf.force_target_resolution)
 	  targetResolution = windowResolution;
 
-      if(renderConf.multisampling)
+      if(renderConf.multisampling) 
 	  glEnable(GL_MULTISAMPLE);
       else
 	  glDisable(GL_MULTISAMPLE);
 
       if(useOffscreenFramebuffer) {
+	  if(renderConf.multisampling)
+	      glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
+	  else
+	      msaaSamples = 1;
 	  if(offscreenFramebuffer != nullptr)
 	      delete offscreenFramebuffer;
-	  offscreenFramebuffer = new Framebuffer((GLsizei)targetResolution.x,
-						 (GLsizei)targetResolution.y,
-						 renderConf.multisampling, true);
+	  offscreenFramebuffer = new Framebuffer(
+		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, msaaSamples, {
+		      Framebuffer::Attachment(
+			      Framebuffer::Attachment::Position::color0,
+			      renderConf.multisampling ?
+			      Framebuffer::AttachmentType::renderbuffer :
+			      Framebuffer::AttachmentType::texture2D,
+			      GL_RGB),
+		       Framebuffer::Attachment(
+		            Framebuffer::Attachment::Position::depthStencil,
+		            Framebuffer::AttachmentType::renderbuffer,
+		            GL_DEPTH24_STENCIL8),
+		  });
 	  if(renderConf.multisampling) {
-	      if(offscreenBlitFramebuffer != nullptr)
-		  delete offscreenBlitFramebuffer;
-	      glGetIntegerv(GL_MAX_SAMPLES, &msaaSamples);
-	      offscreenBlitFramebuffer = new Framebuffer((GLsizei)targetResolution.x,
-							 (GLsizei)targetResolution.y,
-							 false, false);
+	      offscreenBlitFramebuffer = new Framebuffer(
+		      (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, 1, {
+			  Framebuffer::Attachment(
+				  Framebuffer::Attachment::Position::color0,
+				  Framebuffer::AttachmentType::texture2D,
+				  GL_RGB)});
 	  }
 	  finalShader->Use();
 	  finalTransform = glmhelper::calcFinalOffset(targetResolution, windowResolution);
@@ -463,7 +477,6 @@ namespace glenv {
 	      renderConf.depth_range_2D[1]);
 
       set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
-      LOG("framebuffer resized");
   }
 
   void GLRender::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
