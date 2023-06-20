@@ -16,14 +16,14 @@ add_dependencies(${OpenGL-Render-Lib} ResourceLoader OutfacingGraphics glfw)
 target_link_libraries(${OpenGL-Render-Lib} PUBLIC OutfacingGraphics glfw)
 
 target_link_libraries(${OpenGL-Render-Lib} PRIVATE
-  ResourceLoader
-  ${FREETYPE_LIBRARIES})
+  ResourceLoader)
+
+if(NOT NO_FREETYPE)
+  add_dependencies(${OpenGL-Render-Lib} freetype)
+  target_link_libraries(${OpenGL-Render-Lib} PRIVATE freetype)
+endif()
 
 target_include_directories(${OpenGL-Render-Lib} PUBLIC
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/../include/
-)
-
-target_include_directories(${OpenGL-Render-Lib} PRIVATE
-  ${FREETYPE_INCLUDE_DIRS}
 )
