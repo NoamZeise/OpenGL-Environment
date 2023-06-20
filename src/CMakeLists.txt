@@ -7,8 +7,6 @@ file(GLOB OGL_RENDER_SOURCES
 
 set(OpenGL-Render-Lib "OpenGL-Environment")
 
-find_package(Freetype REQUIRED)
-
 add_library(${OpenGL-Render-Lib} ${OGL_RENDER_SOURCES})
 
 add_dependencies(${OpenGL-Render-Lib} ResourceLoader OutfacingGraphics glfw)
