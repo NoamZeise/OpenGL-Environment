@@ -6,7 +6,7 @@
 
 struct InternalAttachment;
 
-class Framebuffer {
+class GlFramebuffer {
  public:
     enum class AttachmentType {
 	renderbuffer,
@@ -29,8 +29,8 @@ class Framebuffer {
 	int format;
     };
     
-    Framebuffer(GLsizei width, GLsizei height, int samples, std::vector<Attachment> attachments);
-    ~Framebuffer();
+    GlFramebuffer(GLsizei width, GLsizei height, int samples, std::vector<Attachment> attachments);
+    ~GlFramebuffer();
     GLuint id();
     GLuint textureId(unsigned int attachmentIndex);
  private:

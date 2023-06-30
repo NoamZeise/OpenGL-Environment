@@ -6,14 +6,14 @@
 
 struct InternalAttachment {
     GLuint id;
-    Framebuffer::AttachmentType type;
+    GlFramebuffer::AttachmentType type;
     
     ~InternalAttachment() {
 	switch(type) {
-	case Framebuffer::AttachmentType::renderbuffer:
+	case GlFramebuffer::AttachmentType::renderbuffer:
 	    glDeleteRenderbuffers(1, &id);
 	    break;
-	case Framebuffer::AttachmentType::texture2D:
+	case GlFramebuffer::AttachmentType::texture2D:
 	    glDeleteTextures(1, &id);
 	    break;
 	}
@@ -22,13 +22,13 @@ struct InternalAttachment {
 
 void createAttachment(
 	InternalAttachment* pAttach,
-	Framebuffer::Attachment attachBlueprint,
+	GlFramebuffer::Attachment attachBlueprint,
 	GLsizei width, GLsizei height, int samples,
 	std::vector<GLenum>* pDrawBuffers);
 
 std::string framebufferError(int status);
 
-Framebuffer::Framebuffer(GLsizei width, GLsizei height, int samples,
+GlFramebuffer::GlFramebuffer(GLsizei width, GLsizei height, int samples,
 			 std::vector<Attachment> attachments) {
     glGenFramebuffers(1, &framebuffer);
     glBindFramebuffer(GL_FRAMEBUFFER, framebuffer);
@@ -52,16 +52,16 @@ Framebuffer::Framebuffer(GLsizei width, GLsizei height, int samples,
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-Framebuffer::~Framebuffer() {
+GlFramebuffer::~GlFramebuffer() {
     glDeleteFramebuffers(1, &framebuffer);
     delete[] attachments;
 }
 
-GLuint Framebuffer::id() {
+GLuint GlFramebuffer::id() {
     return framebuffer;
 }
 
-GLuint Framebuffer::textureId(unsigned int attachmentIndex) {
+GLuint GlFramebuffer::textureId(unsigned int attachmentIndex) {
     if(attachmentIndex >= this->attachmentCount)
 	throw std::runtime_error("tried to access an "
 				 "attachment index that was out of range");
@@ -85,18 +85,18 @@ GLuint genRenderbuffer(int samples, int format, GLsizei width, GLsizei height) {
 
 void createAttachment(
 	InternalAttachment* pAttach,
-	Framebuffer::Attachment attachBlueprint,
+	GlFramebuffer::Attachment attachBlueprint,
 	GLsizei width, GLsizei height, int samples,
 	std::vector<GLenum>* pDrawBuffers) {
     pAttach->type = attachBlueprint.type;
     
     switch(pAttach->type) {
-    case Framebuffer::AttachmentType::renderbuffer:
+    case GlFramebuffer::AttachmentType::renderbuffer:
 	pAttach->id = genRenderbuffer(samples, attachBlueprint.format, width, height);
 	glFramebufferRenderbuffer(GL_FRAMEBUFFER, (GLenum)attachBlueprint.position,
 				  GL_RENDERBUFFER, pAttach->id);
 	break;
-    case Framebuffer::AttachmentType::texture2D:
+    case GlFramebuffer::AttachmentType::texture2D:
 	pAttach->id = ogl_helper::genTexture(attachBlueprint.format, width, height, 0,
 					   false, GL_NEAREST, GL_CLAMP_TO_BORDER, samples);
 	glFramebufferTexture2D(GL_FRAMEBUFFER, (GLenum)attachBlueprint.position,

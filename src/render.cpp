@@ -441,25 +441,25 @@ namespace glenv {
 	      msaaSamples = 1;
 	  if(offscreenFramebuffer != nullptr)
 	      delete offscreenFramebuffer;
-	  offscreenFramebuffer = new Framebuffer(
+	  offscreenFramebuffer = new GlFramebuffer(
 		  (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, msaaSamples, {
-		      Framebuffer::Attachment(
-			      Framebuffer::Attachment::Position::color0,
+		      GlFramebuffer::Attachment(
+			      GlFramebuffer::Attachment::Position::color0,
 			      renderConf.multisampling ?
-			      Framebuffer::AttachmentType::renderbuffer :
-			      Framebuffer::AttachmentType::texture2D,
+			      GlFramebuffer::AttachmentType::renderbuffer :
+			      GlFramebuffer::AttachmentType::texture2D,
 			      GL_RGB),
-		       Framebuffer::Attachment(
-		            Framebuffer::Attachment::Position::depthStencil,
-		            Framebuffer::AttachmentType::renderbuffer,
+		       GlFramebuffer::Attachment(
+		            GlFramebuffer::Attachment::Position::depthStencil,
+		            GlFramebuffer::AttachmentType::renderbuffer,
 		            GL_DEPTH24_STENCIL8),
 		  });
 	  if(renderConf.multisampling) {
-	      offscreenBlitFramebuffer = new Framebuffer(
+	      offscreenBlitFramebuffer = new GlFramebuffer(
 		      (GLsizei)targetResolution.x, (GLsizei)targetResolution.y, 1, {
-			  Framebuffer::Attachment(
-				  Framebuffer::Attachment::Position::color0,
-				  Framebuffer::AttachmentType::texture2D,
+			  GlFramebuffer::Attachment(
+				  GlFramebuffer::Attachment::Position::color0,
+				  GlFramebuffer::AttachmentType::texture2D,
 				  GL_RGB)});
 	  }
 	  finalShader->Use();

@@ -129,8 +129,8 @@ namespace glenv {
       GLShader *finalShader;
 
       bool useOffscreenFramebuffer = true;
-      Framebuffer* offscreenFramebuffer = nullptr;
-      Framebuffer* offscreenBlitFramebuffer = nullptr;
+      GlFramebuffer* offscreenFramebuffer = nullptr;
+      GlFramebuffer* offscreenBlitFramebuffer = nullptr;
       int msaaSamples = 1;
 
       glm::mat4 finalTransform = glm::mat4(1.0f);
