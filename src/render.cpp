@@ -255,7 +255,9 @@ namespace glenv {
 	  glEnable(GL_DEPTH_TEST);
 	  glViewport(0, 0, (GLsizei)targetResolution.x, (GLsizei)targetResolution.y);
       }
-      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClearColor(renderConf.clearColour[0],
+		   renderConf.clearColour[1],
+		   renderConf.clearColour[2], 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       
       if(currentDraw == 0) {
