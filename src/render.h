@@ -59,6 +59,8 @@ namespace glenv {
       void BeginAnim3DDraw();
       void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 		     glm::mat4 normalMat);
+      void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
+		     glm::mat4 normalMat, glm::vec4 colour);
       void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 			 glm::mat4 normalMatrix,
 			 Resource::ModelAnimation *animation);
@@ -83,6 +85,7 @@ namespace glenv {
       bool isTargetResForced();
       void setTargetResolution(glm::vec2 resolution);
       glm::vec2 getTargetResolution();
+      glm::mat4 get3DProj() { return proj3D; }
       void setVsync(bool vsync);
       bool getVsync();
 
@@ -95,7 +98,8 @@ namespace glenv {
       void startDraw();
       void draw2DBatch(int drawCount, Resource::Texture texture,
 		       glm::vec4 currentColour);
-      void draw3DBatch(int drawCount, Resource::Model model);
+      void draw3DBatch(int drawCount, Resource::Model model,
+		       glm::vec4 currentColour);
       void draw3DAnim(Resource::Model model);
 
       void setVPlighting(GLShader *shader);
@@ -170,11 +174,12 @@ namespace glenv {
       };
       struct Draw3D {
 	  Draw3D() {}
-	  Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix);
+	  Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix, glm::vec4 colour);
       
 	  Resource::Model model;
 	  glm::mat4 modelMatrix;
 	  glm::mat4 normalMatrix;
+	  glm::vec4 colour;
       };
       struct DrawAnim3D {
 	  DrawAnim3D() {}

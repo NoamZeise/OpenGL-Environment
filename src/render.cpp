@@ -153,10 +153,12 @@ namespace glenv {
       this->texOffset = texOffset;
   }
 
-  GLRender::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix) {
+  GLRender::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix,
+			   glm::vec4 colour) {
       this->model = model;
       this->modelMatrix = modelMatrix;
       this->normalMatrix = normalMatrix;
+      this->colour = colour;
   }
 
   GLRender::DrawAnim3D::DrawAnim3D(Resource::Model model, glm::mat4 modelMatrix,
@@ -240,7 +242,7 @@ namespace glenv {
 	  draw2DBatch(drawCount, currentTexture, currentColour);	\
 	  break;							\
       case DrawMode::d3D:						\
-	  draw3DBatch(drawCount, currentModel);				\
+	  draw3DBatch(drawCount, currentModel, currentColour);			\
 	  break;							\
       default:								\
 	  throw std::runtime_error("ogl_DRAW_BATCH unknown mode to batch draw!"); \
@@ -298,10 +300,11 @@ namespace glenv {
 	  case DrawMode::d3D:
 	      if((currentModel.ID != drawCalls[i].d3D.model.ID && drawCount > 0) ||
 		 drawCount == MAX_3D_BATCH) {
-		  draw3DBatch(drawCount, currentModel);
+		  draw3DBatch(drawCount, currentModel, currentColour);
 		  drawCount = 0;
 	      }
 	      currentModel = drawCalls[i].d3D.model;
+	      currentColour = drawCalls[i].d3D.colour;
 	      perInstance3DModel[drawCount] = drawCalls[i].d3D.modelMatrix;
 	      perInstance3DNormal[drawCount] = drawCalls[i].d3D.normalMatrix;
 	      drawCount++;
@@ -357,23 +360,28 @@ namespace glenv {
       modelLoader->DrawQuad(drawCount);
   }
 
-  void GLRender::draw3DBatch(int drawCount, Resource::Model model) {
+  void GLRender::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 currentColour) {
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
       modelLoader->DrawModelInstanced(
 	      model, textureLoader, drawCount,
-	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
+	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"), currentColour);
   }
 
   void GLRender::draw3DAnim(Resource::Model model) {
       modelLoader->DrawModel(model, textureLoader, shader3DAnim->Location("spriteColour"));
   }
 
-  void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
+  void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat,
+			   glm::vec4 colour) {
       if(currentDraw < MAX_DRAWS) {
 	  drawCalls[currentDraw].mode = DrawMode::d3D;
-	  drawCalls[currentDraw++].d3D = Draw3D(model, modelMatrix, normalMat);
+	  drawCalls[currentDraw++].d3D = Draw3D(model, modelMatrix, normalMat, colour);
       }
+  }
+
+  void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
+      DrawModel(model, modelMatrix, normalMat, glm::vec4(0.0f));
   }
 
   void GLRender::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,

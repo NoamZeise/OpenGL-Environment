@@ -1,5 +1,5 @@
 #include "ogl_helper.h"
-#include <iostream>
+#include <logger.h>
 
 namespace ogl_helper {
   
@@ -27,12 +27,13 @@ void createShaderStorageBuffer(GLuint* glBuffer, size_t bufferSize, void* pBuffe
       glBindTexture(texType, texture);
       if(samples > 1)
 	  glTexImage2DMultisample(texType, samples, format, width, height, GL_FALSE);
-      else
+      else {
+	  LOG("width:" << width << " height:" << height);
 	  glTexImage2D(texType, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-
+	  
+      }
       if(mipmapping)
 	  glGenerateMipmap(texType);
-
       if(samples == 1) {
 	  glTexParameteri(texType, GL_TEXTURE_WRAP_S, addressingMode);
 	  glTexParameteri(texType, GL_TEXTURE_WRAP_T, addressingMode);

@@ -22,7 +22,7 @@ namespace Resource {
 	  LOG_ERROR("stb_image: failed to load texture at " << path);
 	  return;
       }
-      generateTexture(data, width, height, nrChannels, mipmapping, filterNearest);   
+      generateTexture(data, width, height, nrChannels, mipmapping, filterNearest);
       stbi_image_free(data);
   }
 
@@ -45,7 +45,6 @@ void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
       LOG_ERROR("failed to load texture, unsupported num of channels!");
     return;
   }
-  
   ID = ogl_helper::genTexture(format, width, height, data, mipmapping,
 			      filterNearest ? GL_NEAREST : GL_LINEAR,
 			      GL_REPEAT, 1);

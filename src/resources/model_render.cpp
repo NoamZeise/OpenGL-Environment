@@ -119,16 +119,17 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 
   void GLModelRender::DrawModelInstanced(Model model, GLTextureLoader* texLoader,
 					 int count, uint32_t spriteColourShaderLoc,
-					 uint32_t enableTexShaderLoc) {
+					 uint32_t enableTexShaderLoc, glm::vec4 colour) {
       if(model.ID >= loadedModels.size()) {
-	  LOG_ERROR("model ID out of range");
+	  LOG_ERROR("model ID out of range: " << model.ID << " count: " << loadedModels.size());
 	  return;
       }
 
       for (auto& mesh: loadedModels[model.ID]->meshes) {
 	  glActiveTexture(GL_TEXTURE0);
 	  texLoader->Bind(mesh.texture);
-	  glUniform4fv(spriteColourShaderLoc, 1, &mesh.diffuseColour[0]);
+	  glUniform4fv(spriteColourShaderLoc, 1,
+		       colour.a == 0 ? &mesh.diffuseColour[0] : &colour[0]);
 	  if(mesh.texture.ID == 0)
 	      glUniform1i(enableTexShaderLoc, GL_FALSE);
 	  else
