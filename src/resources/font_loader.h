@@ -6,6 +6,8 @@
 #include <vector>
 
 #include <glm/glm.hpp>
+
+#ifndef NO_FREETYPE
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
@@ -54,5 +56,28 @@ private:
 
 	std::vector<LoadedFont*> fonts;
 };
+} // namespace Resource
+
+#else
+namespace Resource {
+  class GLFontLoader {
+public:
+    GLFontLoader() {}
+    ~GLFontLoader() {}
+    Font LoadFont(std::string file, GLTextureLoader* texLoader);
+    std::vector<QuadDraw> DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate);
+    float MeasureString(Font font, std::string text, float size);
+  };
+
+
+  Font GLFontLoader::LoadFont(std::string file, GLTextureLoader* texLoader) { throw std::runtime_error("Tried to use Font::LoadFont, but NO_FREETYPE is defined"); }
+
+
+  std::vector<QuadDraw> GLFontLoader::DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate) { throw std::runtime_error("Tried to use Font::DrawString, but NO_FREETYPE is defined"); }
+
+
+  float GLFontLoader::MeasureString(Font font, std::string text, float size) { throw std::runtime_error("Tried to use Font::MesaureString, but NO_FREETYPE is defined"); }
 }
+
+#endif
 #endif
