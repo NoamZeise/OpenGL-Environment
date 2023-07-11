@@ -9,6 +9,7 @@
 
 #include "vertex_data.h"
 #include "texture_loader.h"
+#include <glm/glm.hpp>
 
 #include <resource_loader/model_loader.h>
 #include <resource_loader/vertex_model.h>
@@ -29,7 +30,8 @@ namespace Resource {
       void DrawQuad(int count);
       void DrawModel(Model model, GLTextureLoader *texLoader,
 		     uint32_t spriteColourShaderLoc);
-      void DrawModelInstanced(Model model, GLTextureLoader *texLoader, int count,
+      void DrawModelInstanced(Model model, glm::vec4 colour,
+			      GLTextureLoader *texLoader, int count,
 			      uint32_t spriteColourShaderLoc,
 			      uint32_t enableTexShaderLoc);
 

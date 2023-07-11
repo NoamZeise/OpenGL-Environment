@@ -153,10 +153,12 @@ namespace glenv {
       this->texOffset = texOffset;
   }
 
-  GLRender::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix) {
+  GLRender::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix,
+			   glm::vec4 colour) {
       this->model = model;
       this->modelMatrix = modelMatrix;
       this->normalMatrix = normalMatrix;
+      this->colour = colour;
   }
 
   GLRender::DrawAnim3D::DrawAnim3D(Resource::Model model, glm::mat4 modelMatrix,
@@ -240,7 +242,7 @@ namespace glenv {
 	  draw2DBatch(drawCount, currentTexture, currentColour);	\
 	  break;							\
       case DrawMode::d3D:						\
-	  draw3DBatch(drawCount, currentModel);				\
+	  draw3DBatch(drawCount, currentModel, currentModelColour);			\
 	  break;							\
       default:								\
 	  throw std::runtime_error("ogl_DRAW_BATCH unknown mode to batch draw!"); \
@@ -255,7 +257,9 @@ namespace glenv {
 	  glEnable(GL_DEPTH_TEST);
 	  glViewport(0, 0, (GLsizei)targetResolution.x, (GLsizei)targetResolution.y);
       }
-      glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+      glClearColor(renderConf.clear_colour[0],
+		   renderConf.clear_colour[1],
+		   renderConf.clear_colour[2], 1.0f);
       glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
       
       if(currentDraw == 0) {
@@ -267,6 +271,7 @@ namespace glenv {
       DrawMode currentMode;
       Resource::Texture currentTexture;
       glm::vec4 currentColour;
+      glm::vec4 currentModelColour = glm::vec4(0.0f);
       Resource::Model currentModel;
       int drawCount = 0;
       
@@ -294,12 +299,14 @@ namespace glenv {
 	      drawCount++;
 	      break;
 	  case DrawMode::d3D:
-	      if((currentModel.ID != drawCalls[i].d3D.model.ID && drawCount > 0) ||
+	      if(((currentModel.ID != drawCalls[i].d3D.model.ID ||
+		   currentModelColour != drawCalls[i].d3D.colour) && drawCount > 0) ||
 		 drawCount == MAX_3D_BATCH) {
-		  draw3DBatch(drawCount, currentModel);
+		  draw3DBatch(drawCount, currentModel, currentModelColour);
 		  drawCount = 0;
 	      }
 	      currentModel = drawCalls[i].d3D.model;
+	      currentModelColour = drawCalls[i].d3D.colour;
 	      perInstance3DModel[drawCount] = drawCalls[i].d3D.modelMatrix;
 	      perInstance3DNormal[drawCount] = drawCalls[i].d3D.normalMatrix;
 	      drawCount++;
@@ -329,7 +336,9 @@ namespace glenv {
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	  }
 	  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	  glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+	  glClearColor(renderConf.scaled_boarder_colour[0],
+		       renderConf.scaled_boarder_colour[1],
+		       renderConf.scaled_boarder_colour[2], 1.0f);
 	  glClear(GL_COLOR_BUFFER_BIT);
 	  glViewport(0, 0, (GLsizei)windowResolution.x, (GLsizei)windowResolution.y);
 	  
@@ -355,11 +364,11 @@ namespace glenv {
       modelLoader->DrawQuad(drawCount);
   }
 
-  void GLRender::draw3DBatch(int drawCount, Resource::Model model) {
+  void GLRender::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour) {
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
       modelLoader->DrawModelInstanced(
-	      model, textureLoader, drawCount,
+	      model, colour, textureLoader, drawCount,
 	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
@@ -368,11 +377,16 @@ namespace glenv {
   }
 
   void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
+      DrawModel(model, modelMatrix, normalMat, glm::vec4(0.0f));
+  }
+
+  void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
+	    glm::mat4 normalMat, glm::vec4 colour) {
       if(currentDraw < MAX_DRAWS) {
 	  drawCalls[currentDraw].mode = DrawMode::d3D;
-	  drawCalls[currentDraw++].d3D = Draw3D(model, modelMatrix, normalMat);
+	  drawCalls[currentDraw++].d3D = Draw3D(model, modelMatrix, normalMat, colour);
       }
-  }
+  }   
 
   void GLRender::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 			       glm::mat4 normalMatrix,

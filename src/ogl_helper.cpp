@@ -1,5 +1,5 @@
 #include "ogl_helper.h"
-#include <iostream>
+#include <logger.h>
 
 namespace ogl_helper {
   
