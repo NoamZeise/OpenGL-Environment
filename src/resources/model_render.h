@@ -11,7 +11,9 @@
 #include "texture_loader.h"
 #include <glm/glm.hpp>
 
+#ifndef NO_ASSIMP
 #include <resource_loader/model_loader.h>
+#endif
 #include <resource_loader/vertex_model.h>
 #include <graphics/resources.h>
 
@@ -57,8 +59,9 @@ namespace Resource {
       ModelInfo::Model loadModelFromFile(std::string path);
       template <class T_Vert>
       void addLoadedModel(LoadedModel<T_Vert>* model, GLTextureLoader *texLoader);
-    
+#ifndef NO_ASSIMP
       ModelLoader modelLoader;
+#endif
       std::vector<GLLoadedModel *> loadedModels;
       std::vector<Texture> loadedTextures;
 

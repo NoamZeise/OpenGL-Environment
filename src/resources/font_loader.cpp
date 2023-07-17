@@ -1,3 +1,4 @@
+#ifndef NO_FREETYPE
 #include "font_loader.h"
 #include <graphics/glm_helper.h>
 #include <logger.h>
@@ -176,3 +177,5 @@ float GLFontLoader::LoadedFont::MeasureString(std::string text, float size)
 }
 
 }
+
+#endif
