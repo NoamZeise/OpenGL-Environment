@@ -39,8 +39,7 @@ namespace glenv {
   class GLRender {
   public:
       static bool LoadOpenGL();
-      GLRender(GLFWwindow* window);
-      GLRender(GLFWwindow* window, glm::vec2 target);
+      GLRender(GLFWwindow* window, RenderConfig renderConf);
       ~GLRender();
 
       Resource::Texture LoadTexture(std::string filepath);
@@ -81,12 +80,10 @@ namespace glenv {
       void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
       void set2DViewMatrixAndScale(glm::mat4 view, float scale);
       void setLightDirection(glm::vec4 lightDir);
-      void setForceTargetRes(bool force);
-      bool isTargetResForced();
       void setTargetResolution(glm::vec2 resolution);
       glm::vec2 getTargetResolution();
-      void setVsync(bool vsync);
-      bool getVsync();
+      void setRenderConf(RenderConfig renderConf);
+      RenderConfig getRenderConf();
 
   private:
       void setupStagingResourceLoaders();
@@ -120,10 +117,10 @@ namespace glenv {
 
       LightingParameters lighting;
       RenderConfig renderConf;
+      RenderConfig prevRenderConf;
 
       GLFWwindow *window;
       glm::vec2 windowResolution;
-      glm::vec2 targetResolution;
 
       GLShader *shader3D;
       GLShader *shader3DAnim;
@@ -195,8 +192,6 @@ namespace glenv {
 	  Draw3D d3D;
 	  DrawAnim3D d3DAnim;
       };
-
-      
 
       DrawMode currentDrawMode = DrawMode::d2D;
       unsigned int currentDraw = 0;

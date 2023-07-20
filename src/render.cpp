@@ -13,6 +13,9 @@
 #include <graphics/glm_helper.h>
 #include <stdexcept>
 
+
+glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes);
+
 namespace glenv {
 
   bool GLRender::LoadOpenGL() {
@@ -21,19 +24,14 @@ namespace glenv {
       glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
       return true;
   }
-  
-  GLRender::GLRender(GLFWwindow *window) {
-      int width, height;
-      glfwGetWindowSize(window, &width, &height);
-      GLRender(window, glm::vec2(width, height));
-  }
     
-  GLRender::GLRender(GLFWwindow *window, glm::vec2 target) {
+  GLRender::GLRender(GLFWwindow *window, RenderConfig renderConf) {
       glfwMakeContextCurrent(window);
 
       this->window = window;
-      this->targetResolution = target;
-
+      this->renderConf = renderConf;
+      this->prevRenderConf = renderConf;
+      
       if(!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
 	  throw std::runtime_error("failed to load glad");
       LOG("glad loaded");
@@ -251,7 +249,7 @@ namespace glenv {
 
   void GLRender::EndDraw(std::atomic<bool>& submit) {
       inDraw = false;
-
+      glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
       if(useOffscreenFramebuffer) {
 	  glBindFramebuffer(GL_FRAMEBUFFER, offscreenFramebuffer->id());
 	  glEnable(GL_DEPTH_TEST);
@@ -336,9 +334,9 @@ namespace glenv {
 				GL_COLOR_BUFFER_BIT, GL_LINEAR);
 	  }
 	  glBindFramebuffer(GL_FRAMEBUFFER, 0);
-	  glClearColor(renderConf.scaled_boarder_colour[0],
-		       renderConf.scaled_boarder_colour[1],
-		       renderConf.scaled_boarder_colour[2], 1.0f);
+	  glClearColor(renderConf.scaled_border_colour[0],
+		       renderConf.scaled_border_colour[1],
+		       renderConf.scaled_border_colour[2], 1.0f);
 	  glClear(GL_COLOR_BUFFER_BIT);
 	  glViewport(0, 0, (GLsizei)windowResolution.x, (GLsizei)windowResolution.y);
 	  
@@ -439,9 +437,7 @@ namespace glenv {
       windowResolution = glm::vec2((float)width, (float)height);
       glViewport(0, 0, width, height);
       LOG("resizing framebuffer, window width: " << width << "  height:" << height);
-      
-      if(!renderConf.force_target_resolution)
-	  targetResolution = windowResolution;
+      glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
 
       if(renderConf.multisampling) 
 	  glEnable(GL_MULTISAMPLE);
@@ -491,15 +487,18 @@ namespace glenv {
 	      renderConf.depth_range_2D[1]);
 
       set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
+      prevRenderConf = renderConf;
   }
 
   void GLRender::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
       this->fov = fov;
       view3D = view;
 
-      float ratio = renderConf.force_target_resolution ?
-	  targetResolution.x / targetResolution.y :
-	  windowResolution.x / windowResolution.y;
+      float ratio =
+	  renderConf.target_resolution[0] == 0.0 ||
+	  renderConf.target_resolution[1] == 0.0 ?
+	  windowResolution.x / windowResolution.y :
+	  renderConf.target_resolution[0] / renderConf.target_resolution[1];
       
       proj3D = glm::perspective(glm::radians(fov), ratio,
 				renderConf.depth_range_3D[0],
@@ -512,32 +511,40 @@ namespace glenv {
       scale2D = scale;
   }
 
-  void GLRender::setForceTargetRes(bool force) {
-      if(renderConf.force_target_resolution != force) {
-	  renderConf.force_target_resolution = force;
-	  FramebufferResize();
-      }
+  void GLRender::setRenderConf(RenderConfig renderConf) {
+      this->renderConf = renderConf;
+      FramebufferResize();
   }
   
-  bool GLRender::isTargetResForced() { return renderConf.force_target_resolution; }
+  RenderConfig GLRender::getRenderConf() {
+      return renderConf;
+  }
 
   void GLRender::setTargetResolution(glm::vec2 resolution) {
-      targetResolution = resolution;
-      renderConf.force_target_resolution = true;
+      if(renderConf.target_resolution[0] == resolution.x &&
+	 renderConf.target_resolution[1] == resolution.y)
+	  return;
+      renderConf.target_resolution[0] = resolution.x;
+      renderConf.target_resolution[1] = resolution.y;
       FramebufferResize();
   }
 
-  glm::vec2 GLRender::getTargetResolution() { return targetResolution; }
+  glm::vec2 GLRender::getTargetResolution() {
+      return glm::vec2(renderConf.target_resolution[0],
+		       renderConf.target_resolution[1]);
+  }
 
   void GLRender::setLightDirection(glm::vec4 lightDir) {
       lighting.direction = lightDir;
   }
   
-  void GLRender::setVsync(bool vsync) {
-      renderConf.vsync = vsync;
-      FramebufferResize();
-  }
-
-  bool GLRender::getVsync() { return renderConf.vsync; }
   
 }//namespace
+
+  glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes) {
+      glm::vec2 targetResolution(renderConf.target_resolution[0],
+				 renderConf.target_resolution[1]);
+      if(targetResolution.x == 0.0 || targetResolution.y == 0.0)
+	  targetResolution = winRes;
+      return targetResolution;
+  }
