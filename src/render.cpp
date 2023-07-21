@@ -419,7 +419,7 @@ namespace glenv {
 			    float size, float depth, glm::vec4 colour, float rotate) {
       auto draws = fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
       for(const auto &draw: draws) 
-	  DrawQuad(draw.tex, draw.model, draw.colour);
+	  DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
   }
 
   void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour) {

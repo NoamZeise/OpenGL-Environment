@@ -15,14 +15,13 @@ namespace Resource {
       ID = 0;
       width = 0;
       height = 0;
-      int nrChannels;
       unsigned char *data =
-	  stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+	  stbi_load(path.c_str(), &width, &height, nullptr, 4);
       if (!data) {
 	  LOG_ERROR("stb_image: failed to load texture at " << path);
 	  return;
       }
-      generateTexture(data, width, height, nrChannels, mipmapping, filterNearest);   
+      generateTexture(data, width, height, 4, mipmapping, filterNearest);   
       stbi_image_free(data);
   }
 
