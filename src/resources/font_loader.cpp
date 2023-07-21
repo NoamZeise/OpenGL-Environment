@@ -1,4 +1,5 @@
 #include "font_loader.h"
+
 #ifndef NO_FREETYPE
 #include <resource_loader/font_loader.h>
 #include <graphics/glm_helper.h>
@@ -56,6 +57,11 @@ namespace Resource
 
 #else
 
+#include <stdexcept>
+
+struct FontData{};
+
+namespace Resource {
 GLFontLoader::~GLFontLoader() {}
 
 void GLFontLoader::UnloadFonts() {}
@@ -66,5 +72,5 @@ float GLFontLoader::MeasureString(Font font, std::string text, float size) { thr
 
   
 std::vector<QuadDraw> GLFontLoader::DrawString(Font drawfont, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour, float rotate) { throw std::runtime_error("Tried to use Font::DrawString, but NO_FREETYPE is defined"); }
-
+}
 #endif
