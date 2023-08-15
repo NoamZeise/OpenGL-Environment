@@ -65,18 +65,22 @@ GLTextureLoader::~GLTextureLoader() {
 }
 
 Texture GLTextureLoader::LoadTexture(std::string path) {
-  textures.push_back(new LoadedTex(path, mipmapping, filterNearest));
-  return Texture((unsigned int)(textures.size() - 1),
-                 glm::vec2(textures.back()->width, textures.back()->height),
-                 path);
+    for(int i = 0; i < textures.size(); i++)
+	if(textures[i]->path == path)
+	    return Texture((unsigned int)i,
+			   glm::vec2(textures[i]->width,
+				     textures[i]->height));
+    textures.push_back(new LoadedTex(path, mipmapping, filterNearest));
+    return Texture((unsigned int)(textures.size() - 1),
+		   glm::vec2(textures.back()->width,
+			     textures.back()->height));
 }
 
 Texture GLTextureLoader::LoadTexture(unsigned char *data, int width, int height,
                                      int nrChannels) {
   textures.push_back(new LoadedTex(data, width, height, nrChannels, mipmapping, filterNearest));
   return Texture((unsigned int)(textures.size() - 1),
-                 glm::vec2(textures.back()->width, textures.back()->height),
-                 "FONT");
+                 glm::vec2(textures.back()->width, textures.back()->height));
 }
 
   void GLTextureLoader::Bind(Texture tex) {

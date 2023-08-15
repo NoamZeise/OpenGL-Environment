@@ -25,6 +25,7 @@ namespace Resource
 	  unsigned int ID;
 	  int width;
 	  int height;
+	  std::string path;
 	    
       private:
 	  void generateTexture(unsigned char* data, int width, int height,

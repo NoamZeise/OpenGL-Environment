@@ -33,11 +33,7 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 	mesh->vertexData = new GLVertexData(meshData->verticies, meshData->indicies);
 	mesh->diffuseColour = meshData->diffuseColour;
 	if(meshData->texToLoad != "") {
-	    std::string loadStr = checkTextureLoaded(meshData->texToLoad,
-						     this->loadedTextures,
-						     &mesh->texture);
-	    if(loadStr != "")
-		mesh->texture = texLoader->LoadTexture(loadStr);
+	    mesh->texture = texLoader->LoadTexture(MODEL_TEXTURE_LOCATION + meshData->texToLoad);
 	}
     }
 }
