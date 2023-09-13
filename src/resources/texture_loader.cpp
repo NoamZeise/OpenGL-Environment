@@ -12,7 +12,7 @@ namespace Resource {
 
   GLTextureLoader::LoadedTex::LoadedTex(std::string path, bool mipmapping, bool filterNearest) {
       LOG("loading texture: " << path);
-      ID = 0;
+      glID = 0;
       width = 0;
       height = 0;
       unsigned char *data =
@@ -45,15 +45,19 @@ void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
     return;
   }
   
-  ID = ogl_helper::genTexture(format, width, height, data, mipmapping,
+  glID = ogl_helper::genTexture(format, width, height, data, mipmapping,
 			      filterNearest ? GL_NEAREST : GL_LINEAR,
 			      GL_REPEAT, 1);
 }
 
-  GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &ID); }
+  GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &glID); }
   
-  void GLTextureLoader::LoadedTex::Bind() { glBindTexture(GL_TEXTURE_2D, ID); }
+  void GLTextureLoader::LoadedTex::Bind() { glBindTexture(GL_TEXTURE_2D, glID); }
 
+  Texture GLTextureLoader::LoadedTex::getTexture(uint32_t ID) {
+      return Texture(ID, glm::vec2(this->width, this->height));
+  }
+  
   GLTextureLoader::GLTextureLoader(bool mipmapping, bool pixelated) {
     this->mipmapping = mipmapping;
     this->filterNearest = pixelated;
@@ -67,13 +71,9 @@ GLTextureLoader::~GLTextureLoader() {
 Texture GLTextureLoader::LoadTexture(std::string path) {
     for(int i = 0; i < textures.size(); i++)
 	if(textures[i]->path == path)
-	    return Texture((unsigned int)i,
-			   glm::vec2(textures[i]->width,
-				     textures[i]->height));
+	    return textures[i]->getTexture(i);
     textures.push_back(new LoadedTex(path, mipmapping, filterNearest));
-    return Texture((unsigned int)(textures.size() - 1),
-		   glm::vec2(textures.back()->width,
-			     textures.back()->height));
+    return textures.back()->getTexture(textures.size() - 1);
 }
 
 Texture GLTextureLoader::LoadTexture(unsigned char *data, int width, int height,

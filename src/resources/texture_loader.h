@@ -22,7 +22,8 @@ namespace Resource
 		    int nrChannels, bool mipmapping, bool pixelated);
 	  ~LoadedTex();
 	  void Bind();
-	  unsigned int ID;
+	  Texture getTexture(uint32_t ID);
+	  unsigned int glID;
 	  int width;
 	  int height;
 	  std::string path;
