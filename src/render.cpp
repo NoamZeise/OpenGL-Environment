@@ -11,6 +11,7 @@
 #include <glm/gtc/matrix_inverse.hpp>
 #include <logger.h>
 #include <graphics/glm_helper.h>
+#include <graphics/shader_structs.h>
 #include <stdexcept>
 
 
@@ -53,6 +54,7 @@ namespace glenv {
       flatShader = new GLShader("shaders/opengl/flat.vert", "shaders/opengl/flat.frag");
       flatShader->Use();
       glUniform1i(flatShader->Location("image"), 0);
+      setPalette(ShaderPalette());
 
       finalShader = new GLShader("shaders/opengl/final.vert", "shaders/opengl/final.frag");
       finalShader->Use();
@@ -551,4 +553,9 @@ namespace glenv {
 
 void glenv::GLRender::setPalette(ShaderPalette palette) {
     this->currentPalette = palette;
+    flatShader->Use();
+    glUniform4fv(flatShader->Location("col0"), 1, &currentPalette.col0[0]);
+    glUniform4fv(flatShader->Location("col1"), 1, &currentPalette.col1[0]);
+    glUniform4fv(flatShader->Location("col2"), 1, &currentPalette.col2[0]);
+    glUniform4fv(flatShader->Location("col3"), 1, &currentPalette.col3[0]);
 }
