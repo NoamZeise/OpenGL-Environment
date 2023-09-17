@@ -13,6 +13,7 @@
 
 #include <graphics/resources.h>
 #include <graphics/render_config.h>
+#include <graphics/shader_structs.h>
 
 #include "framebuffer.h"
 
@@ -85,6 +86,8 @@ namespace glenv {
       void setRenderConf(RenderConfig renderConf);
       RenderConfig getRenderConf();
 
+      void setPalette(ShaderPalette palette);
+
   private:
       void setupStagingResourceLoaders();
       Resource::Model loadModel(Resource::ModelType type, ModelInfo::Model model,
@@ -150,6 +153,8 @@ namespace glenv {
       Resource::GLTextureLoader *textureLoader = nullptr;
       Resource::GLFontLoader *fontLoader = nullptr;
       Resource::GLModelRender *modelLoader = nullptr;
+
+      ShaderPalette currentPalette;
 
       enum class DrawMode {
 	  d2D,

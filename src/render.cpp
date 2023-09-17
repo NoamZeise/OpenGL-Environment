@@ -548,3 +548,7 @@ namespace glenv {
 	  targetResolution = winRes;
       return targetResolution;
   }
+
+void glenv::GLRender::setPalette(ShaderPalette palette) {
+    this->currentPalette = palette;
+}
