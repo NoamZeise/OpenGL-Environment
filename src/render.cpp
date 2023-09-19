@@ -73,6 +73,7 @@ namespace glenv {
       
       setupStagingResourceLoaders();
       FramebufferResize();
+      setLighting3D(Lighting3D());
       LOG("renderer initialized");
   }
 
@@ -190,12 +191,21 @@ namespace glenv {
       currentDrawMode = DrawMode::d3DAnim;
   }
 
-  void GLRender::setVPlighting(GLShader *shader) {
+  void GLRender::setVPShader(GLShader *shader) {
       shader->Use();
       glUniformMatrix4fv(shader->Location("projection"), 1, GL_FALSE,
 			 &proj3D[0][0]);
       glUniformMatrix4fv(shader->Location("view"), 1, GL_FALSE,
 			 &view3D[0][0]);
+      glUniform4fv(shader->Location("lighting.camPos"), 1,
+		   &lighting.camPos[0]);
+      glm::vec4 colourWhite = glm::vec4(1);
+      glUniform4fv(shader->Location("spriteColour"), 1, &colourWhite[0]);
+      glUniform1i(shader->Location("enableTex"), GL_TRUE);
+  }
+
+  void GLRender::setLightingShader(GLShader *shader) {
+      shader->Use();
       glUniform4fv(shader->Location("lighting.ambient"), 1,
 		   &lighting.ambient[0]);
       glUniform4fv(shader->Location("lighting.diffuse"), 1,
@@ -204,11 +214,6 @@ namespace glenv {
 		   &lighting.specular[0]);
       glUniform4fv(shader->Location("lighting.direction"), 1,
 		   &lighting.direction[0]);
-      glUniform4fv(shader->Location("lighting.camPos"), 1,
-		   &lighting.camPos[0]);
-      glm::vec4 colourWhite = glm::vec4(1);
-      glUniform4fv(shader->Location("spriteColour"), 1, &colourWhite[0]);
-      glUniform1i(shader->Location("enableTex"), GL_TRUE);
   }
 
   void GLRender::setShaderForMode(DrawMode mode, unsigned int i) {
@@ -221,10 +226,10 @@ namespace glenv {
 	  glUniform1i(flatShader->Location("enableTex"), GL_TRUE);
 	  break;
       case DrawMode::d3D:
-	  setVPlighting(shader3D);
+	  setVPShader(shader3D);
 	  break;
       case DrawMode::d3DAnim:
-	  setVPlighting(shader3DAnim);
+	  setVPShader(shader3DAnim);
 	  glUniformMatrix4fv(shader3DAnim->Location("bones"), MAX_BONES, GL_FALSE,
 			     &drawCalls[i].d3DAnim.bones[0][0][0]);
 	  glUniformMatrix4fv(shader3DAnim->Location("model"), 1, GL_FALSE,
@@ -539,9 +544,29 @@ namespace glenv {
   void GLRender::setLightDirection(glm::vec4 lightDir) {
       lighting.direction = lightDir;
   }
-  
-  
-}//namespace
+
+  void GLRender::setLighting3D(Lighting3D lighting) {
+      this->lighting = lighting;
+      setLightingShader(shader3D);
+      setLightingShader(shader3DAnim);
+  }
+
+  void GLRender::setPaletteShader(GLShader *shader) {
+      shader->Use();
+      glUniform4fv(shader->Location("col0"), 1, &currentPalette.col0[0]);
+      glUniform4fv(shader->Location("col1"), 1, &currentPalette.col1[0]);
+      glUniform4fv(shader->Location("col2"), 1, &currentPalette.col2[0]);
+      glUniform4fv(shader->Location("col3"), 1, &currentPalette.col3[0]);
+  }
+
+void GLRender::setPalette(ShaderPalette palette) {
+    this->currentPalette = palette;
+    setPaletteShader(flatShader);
+    setPaletteShader(shader3D);
+    setPaletteShader(shader3DAnim);
+}
+
+} // namespace glenv
 
   glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes) {
       glm::vec2 targetResolution(renderConf.target_resolution[0],
@@ -551,11 +576,4 @@ namespace glenv {
       return targetResolution;
   }
 
-void glenv::GLRender::setPalette(ShaderPalette palette) {
-    this->currentPalette = palette;
-    flatShader->Use();
-    glUniform4fv(flatShader->Location("col0"), 1, &currentPalette.col0[0]);
-    glUniform4fv(flatShader->Location("col1"), 1, &currentPalette.col1[0]);
-    glUniform4fv(flatShader->Location("col2"), 1, &currentPalette.col2[0]);
-    glUniform4fv(flatShader->Location("col3"), 1, &currentPalette.col3[0]);
-}
+

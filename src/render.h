@@ -87,6 +87,7 @@ namespace glenv {
       RenderConfig getRenderConf();
 
       void setPalette(ShaderPalette palette);
+      void setLighting3D(Lighting3D lighting);
 
   private:
       void setupStagingResourceLoaders();
@@ -100,25 +101,11 @@ namespace glenv {
       void draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour);
       void draw3DAnim(Resource::Model model);
 
-      void setVPlighting(GLShader *shader);
+      void setVPShader(GLShader *shader);
+      void setLightingShader(GLShader *shader);
+      void setPaletteShader(GLShader *shader);
 
-      struct LightingParameters {
-	  LightingParameters() {
-	      ambient = glm::vec4(1.0f, 1.0f, 1.0f, 0.35f);
-	      diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 0.8f);
-	      specular = glm::vec4(1.0f, 1.0f, 1.0f, 8.0f);
-	      direction = glm::vec4(0.3f, -0.3f, -0.5f, 0.0f);
-	      camPos = glm::vec4(0.0f);
-	  }
-
-	  alignas(16) glm::vec4 ambient;
-	  alignas(16) glm::vec4 diffuse;
-	  alignas(16) glm::vec4 specular;
-	  alignas(16) glm::vec4 direction;
-	  alignas(16) glm::vec4 camPos;
-      };
-
-      LightingParameters lighting;
+      Lighting3D lighting;
       RenderConfig renderConf;
       RenderConfig prevRenderConf;
 
