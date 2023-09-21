@@ -306,7 +306,8 @@ namespace glenv {
 	  case DrawMode::d3D:
 	      if(((currentModel.ID != drawCalls[i].d3D.model.ID ||
 		   currentModelColour != drawCalls[i].d3D.colour ||
-		   currentModel.useShading != drawCalls[i].d3D.model.useShading)
+		   currentModel.useShading != drawCalls[i].d3D.model.useShading ||
+		   currentModel.overrideTexID != drawCalls[i].d3D.model.overrideTexID)
 		  && drawCount > 0) ||
 		 drawCount == MAX_3D_BATCH) {
 		  draw3DBatch(drawCount, currentModel, currentModelColour);

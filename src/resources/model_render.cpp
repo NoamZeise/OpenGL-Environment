@@ -123,7 +123,9 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData, GLTextureLoad
 		  GL_TRUE : GL_FALSE);
       for (auto& mesh: loadedModels[model.ID]->meshes) {
 	  glActiveTexture(GL_TEXTURE0);
-	  texLoader->Bind(mesh.texture);
+	  texLoader->Bind(model.overrideTexID == -1 ?
+			  mesh.texture :
+			  Resource::Texture(model.overrideTexID, glm::vec2(0)));
 	  glUniform4fv(spriteColourShaderLoc, 1,
 		       colour.a == 0.0f ? &mesh.diffuseColour[0] :
 		       &colour[0]);
