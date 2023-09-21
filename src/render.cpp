@@ -305,7 +305,9 @@ namespace glenv {
 	      break;
 	  case DrawMode::d3D:
 	      if(((currentModel.ID != drawCalls[i].d3D.model.ID ||
-		   currentModelColour != drawCalls[i].d3D.colour) && drawCount > 0) ||
+		   currentModelColour != drawCalls[i].d3D.colour ||
+		   currentModel.useShading != drawCalls[i].d3D.model.useShading)
+		  && drawCount > 0) ||
 		 drawCount == MAX_3D_BATCH) {
 		  draw3DBatch(drawCount, currentModel, currentModelColour);
 		  drawCount = 0;
@@ -374,7 +376,8 @@ namespace glenv {
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
       modelLoader->DrawModelInstanced(
 	      model, colour, textureLoader, drawCount,
-	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
+	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"),
+				      shader3D->Location("useShading"));
   }
 
   void GLRender::draw3DAnim(Resource::Model model) {

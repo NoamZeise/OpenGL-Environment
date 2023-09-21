@@ -35,7 +35,8 @@ namespace Resource {
       void DrawModelInstanced(Model model, glm::vec4 colour,
 			      GLTextureLoader *texLoader, int count,
 			      uint32_t spriteColourShaderLoc,
-			      uint32_t enableTexShaderLoc);
+			      uint32_t enableTexShaderLoc,
+			      uint32_t useShadingLoc);
 
   private:
       struct GLMesh {
