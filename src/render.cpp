@@ -188,12 +188,21 @@ namespace glenv {
       currentDrawMode = DrawMode::d3DAnim;
   }
 
-  void GLRender::setVPlighting(GLShader *shader) {
+  void GLRender::setVPshader(GLShader *shader) {
       shader->Use();
       glUniformMatrix4fv(shader->Location("projection"), 1, GL_FALSE,
 			 &proj3D[0][0]);
       glUniformMatrix4fv(shader->Location("view"), 1, GL_FALSE,
 			 &view3D[0][0]);
+      glUniform4fv(shader->Location("lighting.camPos"), 1,
+		   &lighting.camPos[0]);
+      glm::vec4 colourWhite = glm::vec4(1);
+      glUniform4fv(shader->Location("spriteColour"), 1, &colourWhite[0]);
+      glUniform1i(shader->Location("enableTex"), GL_TRUE);
+  }
+
+  void GLRender::setLightingShader(GLShader *shader) {
+      shader->Use();
       glUniform4fv(shader->Location("lighting.ambient"), 1,
 		   &lighting.ambient[0]);
       glUniform4fv(shader->Location("lighting.diffuse"), 1,
@@ -202,11 +211,6 @@ namespace glenv {
 		   &lighting.specular[0]);
       glUniform4fv(shader->Location("lighting.direction"), 1,
 		   &lighting.direction[0]);
-      glUniform4fv(shader->Location("lighting.camPos"), 1,
-		   &lighting.camPos[0]);
-      glm::vec4 colourWhite = glm::vec4(1);
-      glUniform4fv(shader->Location("spriteColour"), 1, &colourWhite[0]);
-      glUniform1i(shader->Location("enableTex"), GL_TRUE);
   }
 
   void GLRender::setShaderForMode(DrawMode mode, unsigned int i) {
@@ -219,10 +223,10 @@ namespace glenv {
 	  glUniform1i(flatShader->Location("enableTex"), GL_TRUE);
 	  break;
       case DrawMode::d3D:
-	  setVPlighting(shader3D);
+	  setVPshader(shader3D);
 	  break;
       case DrawMode::d3DAnim:
-	  setVPlighting(shader3DAnim);
+	  setVPshader(shader3DAnim);
 	  glUniformMatrix4fv(shader3DAnim->Location("bones"), MAX_BONES, GL_FALSE,
 			     &drawCalls[i].d3DAnim.bones[0][0][0]);
 	  glUniformMatrix4fv(shader3DAnim->Location("model"), 1, GL_FALSE,
@@ -536,6 +540,8 @@ namespace glenv {
 
   void GLRender::setLightingProps(BPLighting lighting) {
       this->lighting = lighting;
+      setLightingShader(shader3D);
+      setLightingShader(shader3DAnim);
   }
   
   

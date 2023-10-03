@@ -97,7 +97,8 @@ namespace glenv {
 		       glm::vec4 currentColour);
       void draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour);
       void draw3DAnim(Resource::Model model);
-      void setVPlighting(GLShader *shader);
+      void setVPshader(GLShader *shader);
+      void setLightingShader(GLShader *shader);
 
       BPLighting lighting;
       RenderConfig renderConf;
