@@ -71,6 +71,7 @@ namespace glenv {
       
       setupStagingResourceLoaders();
       FramebufferResize();
+      setLightingProps(BPLighting());
       LOG("renderer initialized");
   }
 
