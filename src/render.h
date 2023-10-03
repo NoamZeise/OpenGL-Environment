@@ -13,6 +13,7 @@
 
 #include <graphics/resources.h>
 #include <graphics/render_config.h>
+#include <graphics/shader_structs.h>
 
 #include "framebuffer.h"
 
@@ -79,7 +80,7 @@ namespace glenv {
 
       void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
       void set2DViewMatrixAndScale(glm::mat4 view, float scale);
-      void setLightDirection(glm::vec4 lightDir);
+      void setLightingProps(BPLighting lighting);
       void setTargetResolution(glm::vec2 resolution);
       glm::vec2 getTargetResolution();
       void setRenderConf(RenderConfig renderConf);
@@ -96,26 +97,9 @@ namespace glenv {
 		       glm::vec4 currentColour);
       void draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour);
       void draw3DAnim(Resource::Model model);
-
       void setVPlighting(GLShader *shader);
 
-      struct LightingParameters {
-	  LightingParameters() {
-	      ambient = glm::vec4(1.0f, 1.0f, 1.0f, 0.35f);
-	      diffuse = glm::vec4(1.0f, 1.0f, 1.0f, 0.8f);
-	      specular = glm::vec4(1.0f, 1.0f, 1.0f, 8.0f);
-	      direction = glm::vec4(0.3f, -0.3f, -0.5f, 0.0f);
-	      camPos = glm::vec4(0.0f);
-	  }
-
-	  alignas(16) glm::vec4 ambient;
-	  alignas(16) glm::vec4 diffuse;
-	  alignas(16) glm::vec4 specular;
-	  alignas(16) glm::vec4 direction;
-	  alignas(16) glm::vec4 camPos;
-      };
-
-      LightingParameters lighting;
+      BPLighting lighting;
       RenderConfig renderConf;
       RenderConfig prevRenderConf;
 

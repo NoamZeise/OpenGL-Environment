@@ -534,8 +534,8 @@ namespace glenv {
 		       renderConf.target_resolution[1]);
   }
 
-  void GLRender::setLightDirection(glm::vec4 lightDir) {
-      lighting.direction = lightDir;
+  void GLRender::setLightingProps(BPLighting lighting) {
+      this->lighting = lighting;
   }
   
   
