@@ -7,6 +7,8 @@
 namespace Resource
 {
 
+  struct GLStagedTex;
+  
   class GLTextureLoader {
   public:
       GLTextureLoader(bool mipmapping, bool filterNearest);
@@ -14,6 +16,9 @@ namespace Resource
       Texture LoadTexture(std::string path);
       Texture LoadTexture(unsigned char* data, int width, int height, int nrChannels);
       void Bind(Texture tex);
+
+      void loadToGPU();
+      void clearStaged();
   private:
 	
       struct LoadedTex {
@@ -33,9 +38,13 @@ namespace Resource
 			       int nrChannels, bool mipmapping, bool pixelated);
       };
 
+      Texture stageTex(unsigned char* data, int width, int height, int nrChannels,
+		       std::string path);
+
       bool mipmapping;
       bool filterNearest;
-    
+
+      std::vector<GLStagedTex> staged;
       std::vector<LoadedTex*> textures;
   };    
 }

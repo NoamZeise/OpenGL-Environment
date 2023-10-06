@@ -10,6 +10,43 @@
 
 namespace Resource {
 
+  struct GLStagedTex {
+      unsigned char* data;
+      int width;
+      int height;
+      int nrChannels;
+      std::string path = "NULL";
+  };
+
+  Texture GLTextureLoader::stageTex(unsigned char* data, int width, int height, int nrChannels,
+				    std::string path) {
+      GLStagedTex tex;
+      tex.data = data;
+      tex.width = width;
+      tex.height = height;
+      tex.nrChannels = nrChannels;
+      tex.path = path;
+      staged.push_back(tex);
+      return Texture(staged.size() - 1, glm::vec2(width, height));
+  }
+
+  void GLTextureLoader::loadToGPU() {
+      for(auto& s: staged) {
+	  
+      }
+      clearStaged();
+  }
+
+  void GLTextureLoader::clearStaged() {
+      for(auto& s: staged) {
+	  if(s.path == "NULL")
+	      delete s.data;
+	  else
+	      stbi_image_free(s.data);
+      }
+      staged.clear();
+  }
+
   GLTextureLoader::LoadedTex::LoadedTex(std::string path, bool mipmapping, bool filterNearest) {
       LOG("loading texture: " << path);
       glID = 0;
@@ -28,6 +65,7 @@ namespace Resource {
 GLTextureLoader::LoadedTex::LoadedTex(unsigned char *data, int width,
                                       int height, int nrChannels, bool mipmapping, bool filterNearest) {
   generateTexture(data, width, height, nrChannels, mipmapping, filterNearest);
+  delete data;
 }
 
 void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
