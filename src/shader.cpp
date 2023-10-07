@@ -10,7 +10,7 @@
 #include <fstream>
 #include <vector>
 
-#include <logger.h>
+#include <graphics/logger.h>
 
 namespace glenv {
 

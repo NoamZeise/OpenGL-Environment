@@ -129,7 +129,6 @@ namespace glenv {
 
       bool inDraw = false;
     
-      Resource::GLTextureLoader *stagingTextureLoader;
       Resource::GLFontLoader *stagingFontLoader;
       Resource::GLModelRender *stagingModelLoader;
       Resource::GLTextureLoader *textureLoader = nullptr;

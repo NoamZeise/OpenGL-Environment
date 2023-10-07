@@ -3,19 +3,21 @@
 #include <string>
 
 #include <glad/glad.h>
-#include <logger.h>
+#include <graphics/logger.h>
 #include <resource_loader/stb_image.h>
 
 #include "../ogl_helper.h"
 
 namespace Resource {
 
+  const std::string NON_PATH = "NULL";
+  
   struct GLStagedTex {
       unsigned char* data;
       int width;
       int height;
       int nrChannels;
-      std::string path = "NULL";
+      std::string path = NON_PATH;
   };
 
   Texture GLTextureLoader::stageTex(unsigned char* data, int width, int height, int nrChannels,
@@ -31,15 +33,50 @@ namespace Resource {
   }
 
   void GLTextureLoader::loadToGPU() {
-      for(auto& s: staged) {
-	  
+      clearGPU();
+      inGpu.resize(staged.size());
+      for(int i = 0; i < staged.size(); i++) {
+	  GLuint format = GL_RGBA;
+	  /*switch(staged[i].nrChannels) {
+	  case 1:
+	      format = GL_RED;
+	      break;
+	  case 2:
+	      format = GL_RG;
+	      break;
+	  case 3:
+	      format = GL_RGB;
+	      break;
+	  case 4:
+	      format = GL_RGBA;
+	      break;
+	  default:
+	      throw std::runtime_error("Unsupported no. of channels");
+	      }*/
+	  if (staged[i].nrChannels == 1)
+	      format = GL_RED;
+	  else if (staged[i].nrChannels == 3)
+	      format = GL_RGB;
+	  else if (staged[i].nrChannels == 4)
+	      format = GL_RGBA;
+	  else {
+	      LOG_ERROR("failed to load texture, unsupported num of channels!");
+	      return;
+	  }	  
+	  inGpu[i] = ogl_helper::genTexture(format,
+					    staged[i].width,
+					    staged[i].height,
+					    staged[i].data,
+					    mipmapping,
+					    filterNearest ? GL_NEAREST : GL_LINEAR,
+					    GL_REPEAT, 1);
       }
       clearStaged();
   }
 
   void GLTextureLoader::clearStaged() {
       for(auto& s: staged) {
-	  if(s.path == "NULL")
+	  if(s.path == NON_PATH)
 	      delete s.data;
 	  else
 	      stbi_image_free(s.data);
@@ -47,85 +84,48 @@ namespace Resource {
       staged.clear();
   }
 
-  GLTextureLoader::LoadedTex::LoadedTex(std::string path, bool mipmapping, bool filterNearest) {
-      LOG("loading texture: " << path);
-      glID = 0;
-      width = 0;
-      height = 0;
-      unsigned char *data =
-	  stbi_load(path.c_str(), &width, &height, nullptr, 4);
-      if (!data) {
-	  LOG_ERROR("stb_image: failed to load texture at " << path);
-	  return;
-      }
-      generateTexture(data, width, height, 4, mipmapping, filterNearest);   
-      stbi_image_free(data);
-  }
-
-GLTextureLoader::LoadedTex::LoadedTex(unsigned char *data, int width,
-                                      int height, int nrChannels, bool mipmapping, bool filterNearest) {
-  generateTexture(data, width, height, nrChannels, mipmapping, filterNearest);
-  delete data;
-}
-
-void GLTextureLoader::LoadedTex::generateTexture(unsigned char *data, int width,
-                                                 int height, int nrChannels,
-						 bool mipmapping, bool filterNearest) {
-  GLuint format = GL_RGBA;
-  if (nrChannels == 1)
-    format = GL_RED;
-  else if (nrChannels == 3)
-    format = GL_RGB;
-  else if (nrChannels == 4)
-    format = GL_RGBA;
-  else {
-      LOG_ERROR("failed to load texture, unsupported num of channels!");
-    return;
+  void GLTextureLoader::clearGPU() {
+      glDeleteTextures(inGpu.size(), inGpu.data());
+      inGpu.clear(); 
   }
   
-  glID = ogl_helper::genTexture(format, width, height, data, mipmapping,
-			      filterNearest ? GL_NEAREST : GL_LINEAR,
-			      GL_REPEAT, 1);
-}
-
-  GLTextureLoader::LoadedTex::~LoadedTex() { glDeleteTextures(1, &glID); }
-  
-  void GLTextureLoader::LoadedTex::Bind() { glBindTexture(GL_TEXTURE_2D, glID); }
-
-  Texture GLTextureLoader::LoadedTex::getTexture(uint32_t ID) {
-      return Texture(ID, glm::vec2(this->width, this->height));
-  }
-  
-  GLTextureLoader::GLTextureLoader(bool mipmapping, bool pixelated) {
+  GLTextureLoader::GLTextureLoader(bool mipmapping, bool pixelated, Resource::ResourcePool pool) {
     this->mipmapping = mipmapping;
     this->filterNearest = pixelated;
+    this->pool = pool;
   }
 
 GLTextureLoader::~GLTextureLoader() {
-  for (unsigned int i = 0; i < textures.size(); i++)
-    delete textures[i];
+  clearStaged();
+  clearGPU();
 }
-
+  
 Texture GLTextureLoader::LoadTexture(std::string path) {
-    for(int i = 0; i < textures.size(); i++)
-	if(textures[i]->path == path)
-	    return textures[i]->getTexture(i);
-    textures.push_back(new LoadedTex(path, mipmapping, filterNearest));
-    return textures.back()->getTexture(textures.size() - 1);
+    for(int i = 0; i < staged.size(); i++)
+	if(staged[i].path == path)
+	    return Texture(i, glm::vec2(staged[i].width, staged[i].height), pool);
+    int width, height, nrChannels;
+    const int DESIRED_CHANNELS = 4;
+    unsigned char* data  = stbi_load(path.c_str(), &width, &height, &nrChannels, DESIRED_CHANNELS);
+    if(!data) {
+	LOG_ERROR("Failed to load texture - path: " << path);
+	throw std::runtime_error("failed to load texture - path: " + path);
+    }
+    if(DESIRED_CHANNELS != 0)
+	nrChannels = DESIRED_CHANNELS;
+    return stageTex(data, width, height, nrChannels, path);
 }
 
 Texture GLTextureLoader::LoadTexture(unsigned char *data, int width, int height,
                                      int nrChannels) {
-  textures.push_back(new LoadedTex(data, width, height, nrChannels, mipmapping, filterNearest));
-  return Texture((unsigned int)(textures.size() - 1),
-                 glm::vec2(textures.back()->width, textures.back()->height));
+    return stageTex(data, width, height, nrChannels, NON_PATH);
 }
 
   void GLTextureLoader::Bind(Texture tex) {
-      if (tex.ID >= textures.size()) {
-	  LOG_ERROR("texture ID out of range");
+      if (tex.ID >= inGpu.size()) {
+	  LOG_ERROR("texture ID out of range: " << tex.ID << " max: " << inGpu.size());
 	  return;
       }
-      textures[tex.ID]->Bind();
+      glBindTexture(GL_TEXTURE_2D, inGpu[tex.ID]);
   }
 }

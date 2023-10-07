@@ -1,7 +1,7 @@
 #include "framebuffer.h"
 
 #include <stdexcept>
-#include <logger.h>
+#include <graphics/logger.h>
 #include "ogl_helper.h"
 
 struct InternalAttachment {

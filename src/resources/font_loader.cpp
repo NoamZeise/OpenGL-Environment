@@ -2,7 +2,7 @@
 
 #include <resource_loader/font_loader.h>
 #include <graphics/glm_helper.h>
-#include <logger.h>
+#include <graphics/logger.h>
 
 namespace Resource
 {

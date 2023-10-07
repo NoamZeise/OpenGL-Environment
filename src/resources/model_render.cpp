@@ -1,5 +1,5 @@
 #include "model_render.h"
-#include <logger.h>
+#include <graphics/logger.h>
 
 namespace Resource
 {

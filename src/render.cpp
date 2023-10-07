@@ -9,7 +9,7 @@
 #include "resources/model_render.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
-#include <logger.h>
+#include <graphics/logger.h>
 #include <graphics/glm_helper.h>
 #include <stdexcept>
 
@@ -70,6 +70,9 @@ namespace glenv {
       LOG("shader buffers created");
       
       setupStagingResourceLoaders();
+      textureLoader = new Resource::GLTextureLoader(
+	      renderConf.mip_mapping, renderConf.texture_filter_nearest,
+	      Resource::ResourcePool(0));
       FramebufferResize();
       setLightingProps(BPLighting());
       LOG("renderer initialized");
@@ -91,25 +94,22 @@ namespace glenv {
   }
 
   void GLRender::setupStagingResourceLoaders() {
-      stagingTextureLoader = new Resource::GLTextureLoader(
-	      renderConf.mip_mapping, renderConf.texture_filter_nearest);
       stagingFontLoader = new Resource::GLFontLoader();
       stagingModelLoader = new Resource::GLModelRender();
-      stagingTextureLoader->LoadTexture("textures/error.png");
   }
 
   Resource::Texture GLRender::LoadTexture(std::string filepath) {
-      return stagingTextureLoader->LoadTexture(filepath);
+      return textureLoader->LoadTexture(filepath);
   }
   
   Resource::Model GLRender::loadModel(Resource::ModelType type, std::string filepath,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return stagingModelLoader->loadModel(type, filepath, stagingTextureLoader, pGetAnimations);
+      return stagingModelLoader->loadModel(type, filepath, textureLoader, pGetAnimations);
   }
 
   Resource::Model GLRender::loadModel(Resource::ModelType type, ModelInfo::Model model,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return stagingModelLoader->loadModel(type, model, stagingTextureLoader, pGetAnimations);
+      return stagingModelLoader->loadModel(type, model, textureLoader, pGetAnimations);
   }
 
   Resource::Model GLRender::Load3DModel(std::string filepath) {
@@ -126,19 +126,17 @@ namespace glenv {
   }
 
   Resource::Font GLRender::LoadFont(std::string filepath) {
-      return stagingFontLoader->LoadFont(filepath, stagingTextureLoader);
+      return stagingFontLoader->LoadFont(filepath, textureLoader);
   }
 
   void GLRender::LoadResourcesToGPU() {
-      // Does nothing in OGL version, but needs to match vulkan functions.
+      textureLoader->loadToGPU();
   }
 
   void GLRender::UseLoadedResources() {
-      delete textureLoader;
       delete fontLoader;
       delete modelLoader;
 
-      textureLoader = stagingTextureLoader;
       fontLoader = stagingFontLoader;
       modelLoader = stagingModelLoader;
       setupStagingResourceLoaders();
