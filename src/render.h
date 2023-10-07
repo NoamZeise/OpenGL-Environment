@@ -17,11 +17,10 @@
 
 #include "framebuffer.h"
 
-namespace Resource {
-    class GLTextureLoader;
-    class GLModelRender;
-    class GLFontLoader;
+class GLResourcePool;
 
+namespace Resource {
+  class GLModelRender;
 } // namespace Resource
 
 class GLVertexData;
@@ -44,15 +43,38 @@ namespace glenv {
       ~GLRender();
 
       Resource::Texture LoadTexture(std::string filepath);
+      Resource::Texture LoadTexture(Resource::ResourcePool pool, std::string path);
+      // 4 channels assumed
+      Resource::Texture LoadTexture(unsigned char* data, int width, int height);
+      Resource::Texture LoadTexture(Resource::ResourcePool pool, unsigned char* data,
+				    int width, int height);
+      Resource::Model LoadModel(Resource::ModelType type, std::string filepath,
+				std::vector<Resource::ModelAnimation> *pAnimations);
+      Resource::Model LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+				std::string filepath,
+				std::vector<Resource::ModelAnimation> *pAnimations);
+      Resource::Model LoadModel(Resource::ModelType type, ModelInfo::Model& model,
+				std::vector<Resource::ModelAnimation> *pAnimations);
+      Resource::Model LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+				ModelInfo::Model& model,
+				std::vector<Resource::ModelAnimation> *pAnimations);
       Resource::Model Load3DModel(std::string filepath);
       Resource::Model Load3DModel(ModelInfo::Model &model);
       Resource::Model LoadAnimatedModel(std::string filepath,
 					std::vector<Resource::ModelAnimation> *pGetAnimations);
 
       Resource::Font LoadFont(std::string filepath);
-  
+      Resource::Font LoadFont(Resource::ResourcePool pool, std::string filepath);
+
+      Resource::ResourcePool CreateResourcePool();
+      void DestroyResourcePool(Resource::ResourcePool pool);
+      // does notging in OGL version
+      void setResourcePoolInUse(Resource::ResourcePool pool, bool usePool) {}
+      
       void LoadResourcesToGPU();
-      void UseLoadedResources();
+      void LoadResourcesToGPU(Resource::ResourcePool pool);
+      // does nothing in OGL version
+      void UseLoadedResources() {}
 
       void Begin2DDraw();
       void Begin3DDraw();
@@ -87,7 +109,7 @@ namespace glenv {
       RenderConfig getRenderConf();
 
   private:
-      void setupStagingResourceLoaders();
+
       Resource::Model loadModel(Resource::ModelType type, ModelInfo::Model model,
 				std::vector<Resource::ModelAnimation> *pGetAnimations);
       Resource::Model loadModel(Resource::ModelType type, std::string filepath,
@@ -99,6 +121,10 @@ namespace glenv {
       void draw3DAnim(Resource::Model model);
       void setVPshader(GLShader *shader);
       void setLightingShader(GLShader *shader);
+
+      bool _validPool(Resource::ResourcePool pool);
+      void _throwIfPoolInvaid(Resource::ResourcePool pool);
+      bool _poolInUse(Resource::ResourcePool pool);
 
       BPLighting lighting;
       RenderConfig renderConf;
@@ -128,12 +154,10 @@ namespace glenv {
       float fov;
 
       bool inDraw = false;
-    
-      Resource::GLFontLoader *stagingFontLoader;
-      Resource::GLModelRender *stagingModelLoader;
-      Resource::GLTextureLoader *textureLoader = nullptr;
-      Resource::GLFontLoader *fontLoader = nullptr;
-      Resource::GLModelRender *modelLoader = nullptr;
+
+      Resource::ResourcePool defaultPool;
+      std::vector<GLResourcePool*> pools;
+      std::vector<int> freePools;
 
       enum class DrawMode {
 	  d2D,

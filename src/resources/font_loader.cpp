@@ -4,21 +4,39 @@
 #include <graphics/glm_helper.h>
 #include <graphics/logger.h>
 
-namespace Resource
-{
-
+namespace Resource {
+  
+  GLFontLoader::GLFontLoader(Resource::ResourcePool pool) {
+      this->pool = pool;
+  }
+  
   GLFontLoader::~GLFontLoader() {
-      UnloadFonts();
+      UnloadStaged();
+      UnloadGpu();
   }
 
-  void GLFontLoader::UnloadFonts() {
+  void GLFontLoader::loadToGPU() {
+      UnloadGpu();
+      inGpu = staged;
+      staged.clear();
+  }
+
+  void fontsUnload(std::vector<FontData*> &fonts) {
       for(int i = 0; i < fonts.size(); i++)
 	  delete fonts[i];
       fonts.clear();
   }
 
+  void GLFontLoader::UnloadStaged() {
+      fontsUnload(staged);
+  }
+
+  void GLFontLoader::UnloadGpu() {
+      fontsUnload(inGpu);
+  }
+
   Font GLFontLoader::LoadFont(std::string file, GLTextureLoader *texLoader) {
-      LOG("loading font: " << file << " ID: " << fonts.size());
+      LOG("loading font: " << file << " ID: " << staged.size());
       FontData* d = loadFont(file, FONT_LOAD_SIZE);
       Resource::Texture t = texLoader->LoadTexture(d->textureData,
 						   d->width,
@@ -27,16 +45,16 @@ namespace Resource
       for(auto &c: d->chars)
 	  c.second.tex = t;
       d->textureData = nullptr;
-      fonts.push_back(d);
-      return Font((unsigned int)(fonts.size() - 1));
+      staged.push_back(d);
+      return Font((unsigned int)(staged.size() - 1), pool);
   }
   
   float GLFontLoader::MeasureString(Font font, std::string text, float size) {
-      if (font.ID >= fonts.size()) {
+      if (font.ID >= inGpu.size()) {
 	  LOG_ERROR("font is out of range, in MeasureString, returning 0");
 	  return 0.0f;
       }
-      return measureString(fonts[font.ID], text, size);
+      return measureString(inGpu[font.ID], text, size);
   }
 
 
@@ -45,11 +63,11 @@ namespace Resource
                                                  glm::vec2 position, float size,
                                                  float depth, glm::vec4 colour,
                                                  float rotate) {
-    if (drawfont.ID >= fonts.size()) {
+    if (drawfont.ID >= inGpu.size()) {
 	LOG_ERROR("font is out of range in DrawString, returing no draws!");
 	return {};
     }
-    return getDraws(fonts[drawfont.ID], text, size, position, depth, colour, rotate);
+    return getDraws(inGpu[drawfont.ID], text, size, position, depth, colour, rotate);
 }
 
 }

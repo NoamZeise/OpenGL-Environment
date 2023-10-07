@@ -22,6 +22,7 @@ namespace Resource {
 
   Texture GLTextureLoader::stageTex(unsigned char* data, int width, int height, int nrChannels,
 				    std::string path) {
+      LOG("loaded texture " << path << " at ID: " << staged.size());
       GLStagedTex tex;
       tex.data = data;
       tex.width = width;
@@ -37,7 +38,7 @@ namespace Resource {
       inGpu.resize(staged.size());
       for(int i = 0; i < staged.size(); i++) {
 	  GLuint format = GL_RGBA;
-	  /*switch(staged[i].nrChannels) {
+	  switch(staged[i].nrChannels) {
 	  case 1:
 	      format = GL_RED;
 	      break;
@@ -52,17 +53,7 @@ namespace Resource {
 	      break;
 	  default:
 	      throw std::runtime_error("Unsupported no. of channels");
-	      }*/
-	  if (staged[i].nrChannels == 1)
-	      format = GL_RED;
-	  else if (staged[i].nrChannels == 3)
-	      format = GL_RGB;
-	  else if (staged[i].nrChannels == 4)
-	      format = GL_RGBA;
-	  else {
-	      LOG_ERROR("failed to load texture, unsupported num of channels!");
-	      return;
-	  }	  
+	  }  
 	  inGpu[i] = ogl_helper::genTexture(format,
 					    staged[i].width,
 					    staged[i].height,

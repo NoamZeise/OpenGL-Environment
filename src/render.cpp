@@ -3,10 +3,7 @@
 #include "ogl_helper.h"
 #include "shader.h"
 #include "resources/vertex_data.h"
-#include "resources/texture_loader.h"
-#include "resources/font_loader.h"
-
-#include "resources/model_render.h"
+#include "resources/resource_pool.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/logger.h>
@@ -69,10 +66,7 @@ namespace glenv {
       ogl_helper::createShaderStorageBuffer(&texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset));
       LOG("shader buffers created");
       
-      setupStagingResourceLoaders();
-      textureLoader = new Resource::GLTextureLoader(
-	      renderConf.mip_mapping, renderConf.texture_filter_nearest,
-	      Resource::ResourcePool(0));
+      defaultPool = CreateResourcePool();
       FramebufferResize();
       setLightingProps(BPLighting());
       LOG("renderer initialized");
@@ -88,28 +82,82 @@ namespace glenv {
       delete shader3DAnim;
       delete flatShader;
       delete finalShader;
-      delete textureLoader;
-      delete fontLoader;
-      delete modelLoader;
+      for(auto& pool : pools)
+	  delete pool;
   }
 
-  void GLRender::setupStagingResourceLoaders() {
-      stagingFontLoader = new Resource::GLFontLoader();
-      stagingModelLoader = new Resource::GLModelRender();
+  Resource::ResourcePool GLRender::CreateResourcePool() {
+      int index = pools.size();
+      if(freePools.empty()) {
+	  pools.push_back(nullptr);
+      } else {
+	  index = freePools.back();
+	  freePools.pop_back();
+      }
+      pools[index] = new GLResourcePool(Resource::ResourcePool(index), renderConf);
+      return pools[index]->poolID;
+  }
+  void GLRender::DestroyResourcePool(Resource::ResourcePool pool) {
+      for(int i = 0; i < pools.size(); i++) {
+	  if(pools[i]->poolID.ID == pool.ID) {
+	      delete pools[i];
+	      pools[i] = nullptr;
+	      freePools.push_back(i);
+	  }
+      }
+  }
+  
+  Resource::Texture GLRender::LoadTexture(Resource::ResourcePool pool, std::string path) {
+      _throwIfPoolInvaid(pool);
+      return pools[pool.ID]->texLoader->LoadTexture(path);
   }
 
   Resource::Texture GLRender::LoadTexture(std::string filepath) {
-      return textureLoader->LoadTexture(filepath);
+      return LoadTexture(defaultPool, filepath);
+  }
+
+  Resource::Texture GLRender::LoadTexture(Resource::ResourcePool pool, unsigned char* data,
+					  int width, int height) {
+      _throwIfPoolInvaid(pool);
+      return pools[pool.ID]->texLoader->LoadTexture(data, width, height, 4);
+  }
+  
+  Resource::Texture GLRender::LoadTexture(unsigned char* data, int width, int height) {
+      return LoadTexture(defaultPool, data, width, height);
+  }
+
+  Resource::Model GLRender::LoadModel(Resource::ModelType type, std::string filepath,
+				      std::vector<Resource::ModelAnimation> *pAnimations) {
+      return LoadModel(defaultPool, type, filepath, pAnimations);
+  }
+  
+  Resource::Model GLRender::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+				      std::string filepath,
+				      std::vector<Resource::ModelAnimation> *pAnimations) {
+      _throwIfPoolInvaid(pool);
+      return pools[pool.ID]->loadModel(type, filepath, pAnimations);
+  }
+  
+  Resource::Model GLRender::LoadModel(Resource::ModelType type, ModelInfo::Model& model,
+			    std::vector<Resource::ModelAnimation> *pAnimations) {
+      return LoadModel(defaultPool, type, model, pAnimations);
+  }
+  
+  Resource::Model GLRender::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+				      ModelInfo::Model& model,
+				      std::vector<Resource::ModelAnimation> *pAnimations) {
+      _throwIfPoolInvaid(pool);
+      return pools[pool.ID]->loadModel(type, model, pAnimations);
   }
   
   Resource::Model GLRender::loadModel(Resource::ModelType type, std::string filepath,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return stagingModelLoader->loadModel(type, filepath, textureLoader, pGetAnimations);
+      return pools[defaultPool.ID]->modelLoader->loadModel(type, filepath, pools[defaultPool.ID]->texLoader, pGetAnimations);
   }
 
   Resource::Model GLRender::loadModel(Resource::ModelType type, ModelInfo::Model model,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return stagingModelLoader->loadModel(type, model, textureLoader, pGetAnimations);
+      return pools[defaultPool.ID]->modelLoader->loadModel(type, model, pools[defaultPool.ID]->texLoader, pGetAnimations);
   }
 
   Resource::Model GLRender::Load3DModel(std::string filepath) {
@@ -120,27 +168,27 @@ namespace glenv {
       return loadModel(Resource::ModelType::m3D, model, nullptr);
   }
 
-  Resource::Model GLRender::LoadAnimatedModel(std::string filepath,
-					      std::vector<Resource::ModelAnimation> *pGetAnimations) {
+  Resource::Model GLRender::LoadAnimatedModel(
+	  std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations) {
       return loadModel(Resource::ModelType::m3D_Anim, filepath, pGetAnimations);
   }
 
   Resource::Font GLRender::LoadFont(std::string filepath) {
-      return stagingFontLoader->LoadFont(filepath, textureLoader);
+      return LoadFont(defaultPool, filepath);
   }
 
+  Resource::Font GLRender::LoadFont(Resource::ResourcePool pool, std::string filepath) {
+      _throwIfPoolInvaid(pool);
+      return pools[pool.ID]->fontLoader->LoadFont(filepath, pools[pool.ID]->texLoader);
+  }
+
+  void GLRender::LoadResourcesToGPU(Resource::ResourcePool pool) {
+      _throwIfPoolInvaid(pool);
+      pools[pool.ID]->loadGpu();
+  }
+	   
   void GLRender::LoadResourcesToGPU() {
-      textureLoader->loadToGPU();
-  }
-
-  void GLRender::UseLoadedResources() {
-      delete fontLoader;
-      delete modelLoader;
-
-      fontLoader = stagingFontLoader;
-      modelLoader = stagingModelLoader;
-      setupStagingResourceLoaders();
-      LOG("resources loaded");
+      LoadResourcesToGPU(defaultPool);
   }
 
   GLRender::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset) {
@@ -286,7 +334,8 @@ namespace glenv {
 
 	  switch(currentMode) {
 	  case DrawMode::d2D:
-	      if((currentTexture.ID != drawCalls[i].d2D.tex.ID ||
+	      if((currentTexture.pool.ID != drawCalls[i].d2D.tex.pool.ID ||
+		  currentTexture.ID != drawCalls[i].d2D.tex.ID ||
 		  currentColour != drawCalls[i].d2D.colour ||
 		  drawCount == MAX_2D_BATCH) && drawCount > 0
 		 ) {
@@ -300,7 +349,8 @@ namespace glenv {
 	      drawCount++;
 	      break;
 	  case DrawMode::d3D:
-	      if(((currentModel.ID != drawCalls[i].d3D.model.ID ||
+	      if(((currentModel.pool.ID != drawCalls[i].d3D.model.pool.ID ||
+		   currentModel.ID != drawCalls[i].d3D.model.ID ||
 		   currentModelColour != drawCalls[i].d3D.colour) && drawCount > 0) ||
 		 drawCount == MAX_3D_BATCH) {
 		  draw3DBatch(drawCount, currentModel, currentModelColour);
@@ -356,25 +406,48 @@ namespace glenv {
   }
 
   void GLRender::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour) {
+      if(!_poolInUse(texture.pool)) {
+	  LOG_ERROR("Tried Drawing with texture that is not in use");
+	  return;
+      }
       glUniform4fv(flatShader->Location("spriteColour"), 1, &currentColour[0]);
 
       ogl_helper::shaderStorageBufferData(model2DSSBO, sizeAndPtr(perInstance2DModel), 4);
       ogl_helper::shaderStorageBufferData(texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset), 5);
       glActiveTexture(GL_TEXTURE0);
-      textureLoader->Bind(texture);
-      modelLoader->DrawQuad(drawCount);
+      pools[texture.pool.ID]->texLoader->Bind(texture);
+      pools[texture.pool.ID]->modelLoader->DrawQuad(drawCount);
   }
 
   void GLRender::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour) {
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
-      modelLoader->DrawModelInstanced(
-	      model, colour, textureLoader, drawCount,
+      pools[model.pool.ID]->modelLoader->DrawModelInstanced(
+	      model, colour, pools[model.pool.ID]->texLoader, drawCount,
 	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
+  bool GLRender::_validPool(Resource::ResourcePool pool) {
+      if(pool.ID > pools.size() || pools[pool.ID] == nullptr) {
+	  LOG_ERROR("Passed Pool does not exist."
+		    " It has either been destroyed or was never created.");
+	  return false;
+      }
+      return true;
+  }
+
+  bool GLRender::_poolInUse(Resource::ResourcePool pool) {
+    return _validPool(pool) && pools[pool.ID]->usingGPUResources;
+  }
+
+  void GLRender::_throwIfPoolInvaid(Resource::ResourcePool pool) {
+      if(!_validPool(pool))
+	  throw std::runtime_error("Tried to load resource "
+				   "with a pool that does not exist");
+  }
+
   void GLRender::draw3DAnim(Resource::Model model) {
-      modelLoader->DrawModel(model, textureLoader, shader3DAnim->Location("spriteColour"));
+      pools[defaultPool.ID]->modelLoader->DrawModel(model, pools[defaultPool.ID]->texLoader, shader3DAnim->Location("spriteColour"));
   }
 
   void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
@@ -420,7 +493,11 @@ namespace glenv {
 
   void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position,
 			    float size, float depth, glm::vec4 colour, float rotate) {
-      auto draws = fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
+      if(!_poolInUse(font.pool)) {
+	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
+	  return;
+      }
+      auto draws = pools[font.pool.ID]->fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
       for(const auto &draw: draws) 
 	  DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
   }
@@ -429,8 +506,9 @@ namespace glenv {
       DrawString(font, text, position, size, depth, colour, 0);
   }
 
-  float GLRender::MeasureString(Resource::Font font,std::string text, float size) {
-      return fontLoader->MeasureString(font, text, size);
+  float GLRender::MeasureString(Resource::Font font, std::string text, float size) {
+      _throwIfPoolInvaid(font.pool);
+      return pools[font.pool.ID]->fontLoader->MeasureString(font, text, size);
   }
 
   void GLRender::FramebufferResize() {

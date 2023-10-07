@@ -7,9 +7,16 @@
 #include <graphics/render_config.h>
 
 struct GLResourcePool {
-    GLResourcePool(uint32_t ID, RenderConfig config);
+    GLResourcePool(Resource::ResourcePool pool, RenderConfig config);
     ~GLResourcePool();
 
+    Resource::Model loadModel(Resource::ModelType type, std::string path,
+			      std::vector<Resource::ModelAnimation> *pGetAnimations);
+
+    Resource::Model loadModel(Resource::ModelType type, ModelInfo::Model &model,
+			      std::vector<Resource::ModelAnimation> *pGetAnimations);
+
+    void loadGpu();
     void unloadStaged();
     void unloadGPU();
 
@@ -17,7 +24,7 @@ struct GLResourcePool {
     Resource::GLFontLoader* fontLoader;
     Resource::GLModelRender* modelLoader;
     Resource::ResourcePool poolID;
-    bool usingResources;
+    bool usingGPUResources = false;
 };
 
 #endif

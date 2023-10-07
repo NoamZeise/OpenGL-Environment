@@ -21,14 +21,16 @@ namespace Resource {
 
   class GLModelRender {
   public:
-      GLModelRender();
+      GLModelRender(Resource::ResourcePool pool);
       ~GLModelRender();
       Model loadModel(ModelType type, std::string path, GLTextureLoader *texLoader,
 		      std::vector<ModelAnimation> *pGetAnimations);
       Model loadModel(ModelType type, ModelInfo::Model& model, GLTextureLoader *texLoader,
 		      std::vector<ModelAnimation> *pGetAnimations);
-      Model Load3DModel(std::string path, GLTextureLoader *texLoader);
-      Model Load3DModel(ModelInfo::Model& model, GLTextureLoader *texLoader);
+      void loadGPU();
+      void unloadStaged();
+      void unloadGPU();
+      
       void DrawQuad(int count);
       void DrawModel(Model model, GLTextureLoader *texLoader,
 		     uint32_t spriteColourShaderLoc);
@@ -52,19 +54,17 @@ namespace Resource {
 
       void loadQuad();
       
-      
       template <class T_Vert>
       Model loadModelInfo(ModelInfo::Model& model, ModelGroup<T_Vert>& modelGroup,
 			  GLTextureLoader* texLoader, std::vector<ModelAnimation> *pGetAnimations);
       ModelInfo::Model loadModelFromFile(std::string path);
       template <class T_Vert>
-      void addLoadedModel(LoadedModel<T_Vert>* model, GLTextureLoader *texLoader);
+      void addLoadedModel(LoadedModel<T_Vert>* model);
 #ifndef NO_ASSIMP
       ModelLoader modelLoader;
 #endif
+      Resource::ResourcePool pool;
       std::vector<GLLoadedModel *> loadedModels;
-      std::vector<Texture> loadedTextures;
-
       uint32_t quadIndex;
 
       uint32_t currentIndex = 0;

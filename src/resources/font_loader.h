@@ -15,16 +15,20 @@ namespace Resource {
 
 class GLFontLoader {
 public:
-    GLFontLoader() {};
+    GLFontLoader(Resource::ResourcePool pool);
     ~GLFontLoader();
-    void UnloadFonts();
+    void loadToGPU();
+    void UnloadStaged();
+    void UnloadGpu();
     Font LoadFont(std::string file, GLTextureLoader* texLoader);
     std::vector<QuadDraw> DrawString(Font drawfont, std::string text, glm::vec2 position,
 				     float size, float depth, glm::vec4 colour, float rotate);
     float MeasureString(Font font, std::string text, float size);
     
 private:
-    std::vector<FontData*> fonts;
+    Resource::ResourcePool pool;
+    std::vector<FontData*> inGpu;
+    std::vector<FontData*> staged;
 };
 } // namespace Resource
 
