@@ -407,7 +407,7 @@ namespace glenv {
 
   void GLRender::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour) {
       if(!_poolInUse(texture.pool)) {
-	  LOG_ERROR("Tried Drawing with texture that is not in use");
+	  LOG_ERROR("Tried Drawing with pool that is not in use");
 	  return;
       }
       glUniform4fv(flatShader->Location("spriteColour"), 1, &currentColour[0]);
@@ -420,6 +420,10 @@ namespace glenv {
   }
 
   void GLRender::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour) {
+      if(!_poolInUse(model.pool)) {
+		LOG_ERROR("Tried Drawing with pool that is not in use");
+	  return;
+      }
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
       pools[model.pool.ID]->modelLoader->DrawModelInstanced(
@@ -447,7 +451,11 @@ namespace glenv {
   }
 
   void GLRender::draw3DAnim(Resource::Model model) {
-      pools[defaultPool.ID]->modelLoader->DrawModel(model, pools[defaultPool.ID]->texLoader, shader3DAnim->Location("spriteColour"));
+      if(!_poolInUse(model.pool)) {
+	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
+	  return;
+      }
+      pools[model.pool.ID]->modelLoader->DrawModel(model, pools[model.pool.ID]->texLoader, shader3DAnim->Location("spriteColour"));
   }
 
   void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
