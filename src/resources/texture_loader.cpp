@@ -22,7 +22,7 @@ namespace Resource {
 
   Texture GLTextureLoader::stageTex(unsigned char* data, int width, int height, int nrChannels,
 				    std::string path) {
-      LOG("loaded texture " << path << " at ID: " << staged.size());
+      LOG("pool " << pool.ID << " loaded texture " << path << " at ID: " << staged.size());
       GLStagedTex tex;
       tex.data = data;
       tex.width = width;
@@ -30,7 +30,7 @@ namespace Resource {
       tex.nrChannels = nrChannels;
       tex.path = path;
       staged.push_back(tex);
-      return Texture(staged.size() - 1, glm::vec2(width, height));
+      return Texture(staged.size() - 1, glm::vec2(width, height), pool);
   }
 
   void GLTextureLoader::loadToGPU() {
@@ -114,7 +114,7 @@ Texture GLTextureLoader::LoadTexture(unsigned char *data, int width, int height,
 
   void GLTextureLoader::Bind(Texture tex) {
       if (tex.ID >= inGpu.size()) {
-	  LOG_ERROR("texture ID out of range: " << tex.ID << " max: " << inGpu.size());
+	  LOG_ERROR("in pool: " << tex.pool.ID << " texture ID out of range: " << tex.ID << " max: " << inGpu.size());
 	  return;
       }
       glBindTexture(GL_TEXTURE_2D, inGpu[tex.ID]);

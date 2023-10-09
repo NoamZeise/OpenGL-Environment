@@ -334,10 +334,11 @@ namespace glenv {
 
 	  switch(currentMode) {
 	  case DrawMode::d2D:
-	      if((currentTexture.pool.ID != drawCalls[i].d2D.tex.pool.ID ||
+	      if(drawCount > 0 &&
+		 (currentTexture.pool.ID != drawCalls[i].d2D.tex.pool.ID ||
 		  currentTexture.ID != drawCalls[i].d2D.tex.ID ||
 		  currentColour != drawCalls[i].d2D.colour ||
-		  drawCount == MAX_2D_BATCH) && drawCount > 0
+		  drawCount == MAX_2D_BATCH)
 		 ) {
 		  draw2DBatch(drawCount, currentTexture, currentColour);
 		  drawCount = 0;
@@ -421,7 +422,7 @@ namespace glenv {
 
   void GLRender::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour) {
       if(!_poolInUse(model.pool)) {
-		LOG_ERROR("Tried Drawing with pool that is not in use");
+	  LOG_ERROR("Tried Drawing with pool that is not in use");
 	  return;
       }
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
@@ -486,6 +487,7 @@ namespace glenv {
   void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix,
 			  glm::vec4 colour, glm::vec4 texOffset) {
       if(currentDraw < MAX_DRAWS) {
+	  //	  std::cout << "draw pool id: " << texture.pool.ID << std::endl;
 	  drawCalls[currentDraw].mode = DrawMode::d2D;
 	  drawCalls[currentDraw++].d2D = Draw2D(texture, modelMatrix, colour, texOffset);
       }
