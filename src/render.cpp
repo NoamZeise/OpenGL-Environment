@@ -213,28 +213,6 @@ namespace glenv {
       this->normalMatrix = normalMatrix;
   }
 
-  void GLRender::startDraw() {
-      if(!inDraw) {
-	  currentDraw = 0;
-	  inDraw = true;
-      }
-  }
-
-  void GLRender::Begin2DDraw() {
-      startDraw();
-      currentDrawMode = DrawMode::d2D;
-  }
-
-  void GLRender::Begin3DDraw() {
-      startDraw();
-      currentDrawMode = DrawMode::d3D;
-  }
-
-  void GLRender::BeginAnim3DDraw() {
-      startDraw();
-      currentDrawMode = DrawMode::d3DAnim;
-  }
-
   void GLRender::setVPshader(GLShader *shader) {
       shader->Use();
       glUniformMatrix4fv(shader->Location("projection"), 1, GL_FALSE,
@@ -299,7 +277,6 @@ namespace glenv {
   }
 
   void GLRender::EndDraw(std::atomic<bool>& submit) {
-      inDraw = false;
       glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
       if(useOffscreenFramebuffer) {
 	  glBindFramebuffer(GL_FRAMEBUFFER, offscreenFramebuffer->id());
@@ -403,6 +380,8 @@ namespace glenv {
       }
       
       glfwSwapBuffers(window);
+      inDraw = false;
+      currentDraw = 0;
       submit = true;
   }
 
@@ -466,6 +445,7 @@ namespace glenv {
   void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 	    glm::mat4 normalMat, glm::vec4 colour) {
       if(currentDraw < MAX_DRAWS) {
+	  currentDrawMode = DrawMode::d3D;
 	  drawCalls[currentDraw].mode = DrawMode::d3D;
 	  drawCalls[currentDraw++].d3D = Draw3D(model, modelMatrix, normalMat, colour);
       }
@@ -475,6 +455,7 @@ namespace glenv {
 			       glm::mat4 normalMatrix,
 			       Resource::ModelAnimation *animation) {
       if(currentDraw < MAX_DRAWS) {
+	  currentDrawMode = DrawMode::d3DAnim;
 	  drawCalls[currentDraw].mode = DrawMode::d3DAnim;
 	  drawCalls[currentDraw].d3DAnim = DrawAnim3D(model, modelMatrix, normalMatrix);
 	  std::vector<glm::mat4>* bones = animation->getCurrentBones();
@@ -487,6 +468,7 @@ namespace glenv {
   void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix,
 			  glm::vec4 colour, glm::vec4 texOffset) {
       if(currentDraw < MAX_DRAWS) {
+	  currentDrawMode = DrawMode::d3D;
 	  //	  std::cout << "draw pool id: " << texture.pool.ID << std::endl;
 	  drawCalls[currentDraw].mode = DrawMode::d2D;
 	  drawCalls[currentDraw++].d2D = Draw2D(texture, modelMatrix, colour, texOffset);

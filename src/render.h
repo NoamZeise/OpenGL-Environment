@@ -76,9 +76,6 @@ namespace glenv {
       // does nothing in OGL version
       void UseLoadedResources() {}
 
-      void Begin2DDraw();
-      void Begin3DDraw();
-      void BeginAnim3DDraw();
       void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 		     glm::mat4 normalMat);
       void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
@@ -114,7 +111,6 @@ namespace glenv {
 				std::vector<Resource::ModelAnimation> *pGetAnimations);
       Resource::Model loadModel(Resource::ModelType type, std::string filepath,
 				std::vector<Resource::ModelAnimation> *pGetAnimations);
-      void startDraw();
       void draw2DBatch(int drawCount, Resource::Texture texture,
 		       glm::vec4 currentColour);
       void draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour);
