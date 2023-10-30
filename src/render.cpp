@@ -15,14 +15,14 @@ glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes);
 
 namespace glenv {
 
-  bool GLRender::LoadOpenGL() {
+  bool RenderGl::LoadOpenGL() {
       glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
       glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
       glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
       return true;
   }
     
-  GLRender::GLRender(GLFWwindow *window, RenderConfig renderConf) {
+  RenderGl::RenderGl(GLFWwindow *window, RenderConfig renderConf) : Render(window, renderConf) {
       glfwMakeContextCurrent(window);
 
       this->window = window;
@@ -72,7 +72,7 @@ namespace glenv {
       LOG("renderer initialized");
   }
 
-  GLRender::~GLRender() {
+  RenderGl::~RenderGl() {
       if(useOffscreenFramebuffer) {
 	  delete offscreenFramebuffer;
 	  if(offscreenBlitFramebuffer != nullptr)
@@ -86,7 +86,7 @@ namespace glenv {
 	  delete pool;
   }
 
-  Resource::ResourcePool GLRender::CreateResourcePool() {
+  Resource::ResourcePool RenderGl::CreateResourcePool() {
       int index = pools.size();
       if(freePools.empty()) {
 	  pools.push_back(nullptr);
@@ -97,7 +97,7 @@ namespace glenv {
       pools[index] = new GLResourcePool(Resource::ResourcePool(index), renderConf);
       return pools[index]->poolID;
   }
-  void GLRender::DestroyResourcePool(Resource::ResourcePool pool) {
+  void RenderGl::DestroyResourcePool(Resource::ResourcePool pool) {
       for(int i = 0; i < pools.size(); i++) {
 	  if(pools[i]->poolID.ID == pool.ID) {
 	      delete pools[i];
@@ -107,98 +107,98 @@ namespace glenv {
       }
   }
   
-  Resource::Texture GLRender::LoadTexture(Resource::ResourcePool pool, std::string path) {
+  Resource::Texture RenderGl::LoadTexture(Resource::ResourcePool pool, std::string path) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->texLoader->LoadTexture(path);
   }
 
-  Resource::Texture GLRender::LoadTexture(std::string filepath) {
+  Resource::Texture RenderGl::LoadTexture(std::string filepath) {
       return LoadTexture(defaultPool, filepath);
   }
 
-  Resource::Texture GLRender::LoadTexture(Resource::ResourcePool pool, unsigned char* data,
+  Resource::Texture RenderGl::LoadTexture(Resource::ResourcePool pool, unsigned char* data,
 					  int width, int height) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->texLoader->LoadTexture(data, width, height, 4);
   }
   
-  Resource::Texture GLRender::LoadTexture(unsigned char* data, int width, int height) {
+  Resource::Texture RenderGl::LoadTexture(unsigned char* data, int width, int height) {
       return LoadTexture(defaultPool, data, width, height);
   }
 
-  Resource::Model GLRender::LoadModel(Resource::ModelType type, std::string filepath,
+  Resource::Model RenderGl::LoadModel(Resource::ModelType type, std::string filepath,
 				      std::vector<Resource::ModelAnimation> *pAnimations) {
       return LoadModel(defaultPool, type, filepath, pAnimations);
   }
   
-  Resource::Model GLRender::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+  Resource::Model RenderGl::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
 				      std::string filepath,
 				      std::vector<Resource::ModelAnimation> *pAnimations) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->loadModel(type, filepath, pAnimations);
   }
   
-  Resource::Model GLRender::LoadModel(Resource::ModelType type, ModelInfo::Model& model,
+  Resource::Model RenderGl::LoadModel(Resource::ModelType type, ModelInfo::Model& model,
 			    std::vector<Resource::ModelAnimation> *pAnimations) {
       return LoadModel(defaultPool, type, model, pAnimations);
   }
   
-  Resource::Model GLRender::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+  Resource::Model RenderGl::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
 				      ModelInfo::Model& model,
 				      std::vector<Resource::ModelAnimation> *pAnimations) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->loadModel(type, model, pAnimations);
   }
   
-  Resource::Model GLRender::loadModel(Resource::ModelType type, std::string filepath,
+  Resource::Model RenderGl::loadModel(Resource::ModelType type, std::string filepath,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
       return pools[defaultPool.ID]->modelLoader->loadModel(type, filepath, pools[defaultPool.ID]->texLoader, pGetAnimations);
   }
 
-  Resource::Model GLRender::loadModel(Resource::ModelType type, ModelInfo::Model model,
+  Resource::Model RenderGl::loadModel(Resource::ModelType type, ModelInfo::Model model,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
       return pools[defaultPool.ID]->modelLoader->loadModel(type, model, pools[defaultPool.ID]->texLoader, pGetAnimations);
   }
 
-  Resource::Model GLRender::Load3DModel(std::string filepath) {
+  Resource::Model RenderGl::Load3DModel(std::string filepath) {
       return loadModel(Resource::ModelType::m3D, filepath, nullptr);
   }
 
-  Resource::Model GLRender::Load3DModel(ModelInfo::Model &model) {
+  Resource::Model RenderGl::Load3DModel(ModelInfo::Model &model) {
       return loadModel(Resource::ModelType::m3D, model, nullptr);
   }
 
-  Resource::Model GLRender::LoadAnimatedModel(
+  Resource::Model RenderGl::LoadAnimatedModel(
 	  std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations) {
       return loadModel(Resource::ModelType::m3D_Anim, filepath, pGetAnimations);
   }
 
-  Resource::Font GLRender::LoadFont(std::string filepath) {
+  Resource::Font RenderGl::LoadFont(std::string filepath) {
       return LoadFont(defaultPool, filepath);
   }
 
-  Resource::Font GLRender::LoadFont(Resource::ResourcePool pool, std::string filepath) {
+  Resource::Font RenderGl::LoadFont(Resource::ResourcePool pool, std::string filepath) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->fontLoader->LoadFont(filepath, pools[pool.ID]->texLoader);
   }
 
-  void GLRender::LoadResourcesToGPU(Resource::ResourcePool pool) {
+  void RenderGl::LoadResourcesToGPU(Resource::ResourcePool pool) {
       _throwIfPoolInvaid(pool);
       pools[pool.ID]->loadGpu();
   }
 	   
-  void GLRender::LoadResourcesToGPU() {
+  void RenderGl::LoadResourcesToGPU() {
       LoadResourcesToGPU(defaultPool);
   }
 
-  GLRender::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset) {
+  RenderGl::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset) {
       this->tex = tex;
       this->model = model;
       this->colour = colour;
       this->texOffset = texOffset;
   }
 
-  GLRender::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix,
+  RenderGl::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix,
 			   glm::vec4 colour) {
       this->model = model;
       this->modelMatrix = modelMatrix;
@@ -206,14 +206,14 @@ namespace glenv {
       this->colour = colour;
   }
 
-  GLRender::DrawAnim3D::DrawAnim3D(Resource::Model model, glm::mat4 modelMatrix,
+  RenderGl::DrawAnim3D::DrawAnim3D(Resource::Model model, glm::mat4 modelMatrix,
 				   glm::mat4 normalMatrix) {
       this->model = model;
       this->modelMatrix = modelMatrix;
       this->normalMatrix = normalMatrix;
   }
 
-  void GLRender::setVPshader(GLShader *shader) {
+  void RenderGl::setVPshader(GLShader *shader) {
       shader->Use();
       glUniformMatrix4fv(shader->Location("projection"), 1, GL_FALSE,
 			 &proj3D[0][0]);
@@ -226,7 +226,7 @@ namespace glenv {
       glUniform1i(shader->Location("enableTex"), GL_TRUE);
   }
 
-  void GLRender::setLightingShader(GLShader *shader) {
+  void RenderGl::setLightingShader(GLShader *shader) {
       shader->Use();
       glUniform4fv(shader->Location("lighting.ambient"), 1,
 		   &lighting.ambient[0]);
@@ -238,7 +238,7 @@ namespace glenv {
 		   &lighting.direction[0]);
   }
 
-  void GLRender::setShaderForMode(DrawMode mode, unsigned int i) {
+  void RenderGl::setShaderForMode(DrawMode mode, unsigned int i) {
       switch(mode) {
       case DrawMode::d2D:
 	  flatShader->Use();
@@ -276,7 +276,7 @@ namespace glenv {
       }									\
   }
 
-  void GLRender::EndDraw(std::atomic<bool>& submit) {
+  void RenderGl::EndDraw(std::atomic<bool>& submit) {
       glm::vec2 targetResolution = getTargetRes(renderConf, windowResolution);
       if(useOffscreenFramebuffer) {
 	  glBindFramebuffer(GL_FRAMEBUFFER, offscreenFramebuffer->id());
@@ -385,7 +385,7 @@ namespace glenv {
       submit = true;
   }
 
-  void GLRender::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour) {
+  void RenderGl::draw2DBatch(int drawCount, Resource::Texture texture, glm::vec4 currentColour) {
       if(!_poolInUse(texture.pool)) {
 	  LOG_ERROR("Tried Drawing with pool that is not in use");
 	  return;
@@ -399,7 +399,7 @@ namespace glenv {
       pools[texture.pool.ID]->modelLoader->DrawQuad(drawCount);
   }
 
-  void GLRender::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour) {
+  void RenderGl::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour) {
       if(!_poolInUse(model.pool)) {
 	  LOG_ERROR("Tried Drawing with pool that is not in use");
 	  return;
@@ -411,7 +411,7 @@ namespace glenv {
 	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
-  bool GLRender::_validPool(Resource::ResourcePool pool) {
+  bool RenderGl::_validPool(Resource::ResourcePool pool) {
       if(pool.ID > pools.size() || pools[pool.ID] == nullptr) {
 	  LOG_ERROR("Passed Pool does not exist."
 		    " It has either been destroyed or was never created.");
@@ -420,17 +420,17 @@ namespace glenv {
       return true;
   }
 
-  bool GLRender::_poolInUse(Resource::ResourcePool pool) {
+  bool RenderGl::_poolInUse(Resource::ResourcePool pool) {
     return _validPool(pool) && pools[pool.ID]->usingGPUResources;
   }
 
-  void GLRender::_throwIfPoolInvaid(Resource::ResourcePool pool) {
+  void RenderGl::_throwIfPoolInvaid(Resource::ResourcePool pool) {
       if(!_validPool(pool))
 	  throw std::runtime_error("Tried to load resource "
 				   "with a pool that does not exist");
   }
 
-  void GLRender::draw3DAnim(Resource::Model model) {
+  void RenderGl::draw3DAnim(Resource::Model model) {
       if(!_poolInUse(model.pool)) {
 	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
 	  return;
@@ -438,11 +438,11 @@ namespace glenv {
       pools[model.pool.ID]->modelLoader->DrawModel(model, pools[model.pool.ID]->texLoader, shader3DAnim->Location("spriteColour"));
   }
 
-  void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
+  void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
       DrawModel(model, modelMatrix, normalMat, glm::vec4(0.0f));
   }
 
-  void GLRender::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
+  void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 	    glm::mat4 normalMat, glm::vec4 colour) {
       if(currentDraw < MAX_DRAWS) {
 	  currentDrawMode = DrawMode::d3D;
@@ -451,7 +451,7 @@ namespace glenv {
       }
   }   
 
-  void GLRender::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
+  void RenderGl::DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 			       glm::mat4 normalMatrix,
 			       Resource::ModelAnimation *animation) {
       if(currentDraw < MAX_DRAWS) {
@@ -465,7 +465,7 @@ namespace glenv {
       }
   }
 
-  void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix,
+  void RenderGl::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix,
 			  glm::vec4 colour, glm::vec4 texOffset) {
       if(currentDraw < MAX_DRAWS) {
 	  currentDrawMode = DrawMode::d3D;
@@ -475,15 +475,15 @@ namespace glenv {
       }
   }
 
-  void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour) {
+  void RenderGl::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour) {
       DrawQuad(texture, modelMatrix, colour, glm::vec4(0, 0, 1, 1));
   }
 
-  void GLRender::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix) {
+  void RenderGl::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix) {
       DrawQuad(texture, modelMatrix, glm::vec4(1), glm::vec4(0, 0, 1, 1));
   }
 
-  void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position,
+  void RenderGl::DrawString(Resource::Font font, std::string text, glm::vec2 position,
 			    float size, float depth, glm::vec4 colour, float rotate) {
       if(!_poolInUse(font.pool)) {
 	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
@@ -494,16 +494,16 @@ namespace glenv {
 	  DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
   }
 
-  void GLRender::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour) {
+  void RenderGl::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour) {
       DrawString(font, text, position, size, depth, colour, 0);
   }
 
-  float GLRender::MeasureString(Resource::Font font, std::string text, float size) {
+  float RenderGl::MeasureString(Resource::Font font, std::string text, float size) {
       _throwIfPoolInvaid(font.pool);
       return pools[font.pool.ID]->fontLoader->MeasureString(font, text, size);
   }
 
-  void GLRender::FramebufferResize() {
+  void RenderGl::FramebufferResize() {
       glfwSwapInterval(renderConf.vsync ? 1 : 0);
       int width, height;
       glfwGetFramebufferSize(window, &width, &height);
@@ -563,7 +563,7 @@ namespace glenv {
       prevRenderConf = renderConf;
   }
 
-  void GLRender::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
+  void RenderGl::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
       this->fov = fov;
       view3D = view;
 
@@ -579,21 +579,21 @@ namespace glenv {
       lighting.camPos = camPos;
   }
 
-  void GLRender::set2DViewMatrixAndScale(glm::mat4 view, float scale) {
+  void RenderGl::set2DViewMatrixAndScale(glm::mat4 view, float scale) {
       view2D = view;
       scale2D = scale;
   }
 
-  void GLRender::setRenderConf(RenderConfig renderConf) {
+  void RenderGl::setRenderConf(RenderConfig renderConf) {
       this->renderConf = renderConf;
       FramebufferResize();
   }
   
-  RenderConfig GLRender::getRenderConf() {
+  RenderConfig RenderGl::getRenderConf() {
       return renderConf;
   }
 
-  void GLRender::setTargetResolution(glm::vec2 resolution) {
+  void RenderGl::setTargetResolution(glm::vec2 resolution) {
       if(renderConf.target_resolution[0] == resolution.x &&
 	 renderConf.target_resolution[1] == resolution.y)
 	  return;
@@ -602,12 +602,12 @@ namespace glenv {
       FramebufferResize();
   }
 
-  glm::vec2 GLRender::getTargetResolution() {
+  glm::vec2 RenderGl::getTargetResolution() {
       return glm::vec2(renderConf.target_resolution[0],
 		       renderConf.target_resolution[1]);
   }
 
-  void GLRender::setLightingProps(BPLighting lighting) {
+  void RenderGl::setLightingProps(BPLighting lighting) {
       this->lighting = lighting;
       setLightingShader(shader3D);
       setLightingShader(shader3DAnim);

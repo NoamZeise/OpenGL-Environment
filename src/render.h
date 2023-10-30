@@ -11,8 +11,7 @@
 #include <vector>
 #include <iostream>
 
-#include <graphics/resources.h>
-#include <graphics/render_config.h>
+#include <graphics/render.h>
 #include <graphics/shader_structs.h>
 
 #include "framebuffer.h"
@@ -36,11 +35,11 @@ namespace glenv {
 
   const int MAX_BONES = 50;
 
-  class GLRender {
+  class RenderGl : public Render {
   public:
       static bool LoadOpenGL();
-      GLRender(GLFWwindow* window, RenderConfig renderConf);
-      ~GLRender();
+      RenderGl(GLFWwindow* window, RenderConfig renderConf);
+      ~RenderGl();
 
       Resource::Texture LoadTexture(std::string filepath);
       Resource::Texture LoadTexture(Resource::ResourcePool pool, std::string path);
