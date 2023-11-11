@@ -5,8 +5,8 @@
 GLResourcePool::GLResourcePool(Resource::ResourcePool pool, RenderConfig config) {
     poolID = pool;
     texLoader = new TextureLoaderGL(pool, config);
-    fontLoader = new Resource::GLFontLoader(poolID);
     modelLoader = new Resource::GLModelRender(poolID);
+    fontLoader = new InternalFontLoader(poolID, texLoader);
 }
 
 GLResourcePool::~GLResourcePool() {
@@ -28,7 +28,7 @@ Resource::Model GLResourcePool::loadModel(Resource::ModelType type, ModelInfo::M
 void GLResourcePool::loadGpu() {
     LOG("loading to GPU");
     texLoader->loadGPU();
-    fontLoader->loadToGPU();
+    fontLoader->loadGPU();
     modelLoader->loadGPU();
     LOG("finished loading to GPU");
     usingGPUResources = true;
@@ -36,13 +36,13 @@ void GLResourcePool::loadGpu() {
 
 void GLResourcePool::unloadStaged() {
     texLoader->clearStaged();
-    fontLoader->UnloadStaged();
+    fontLoader->clearStaged();
     modelLoader->unloadStaged();
 }
 
 void GLResourcePool::unloadGPU() {
     texLoader->clearGPU();
-    fontLoader->UnloadGpu();
+    fontLoader->clearGPU();
     modelLoader->unloadGPU();
     usingGPUResources = false;
 }

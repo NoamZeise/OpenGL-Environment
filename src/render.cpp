@@ -179,7 +179,7 @@ namespace glenv {
 
   Resource::Font RenderGl::LoadFont(Resource::ResourcePool pool, std::string filepath) {
       _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->fontLoader->LoadFont(filepath, pools[pool.ID]->texLoader);
+      return pools[pool.ID]->fontLoader->LoadFont(filepath);
   }
 
   void RenderGl::LoadResourcesToGPU(Resource::ResourcePool pool) {

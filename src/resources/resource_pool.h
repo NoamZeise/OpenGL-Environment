@@ -3,8 +3,7 @@
 
 #include "texture_loader.h"
 #include "model_render.h"
-#include "font_loader.h"
-#include <graphics/render_config.h>
+#include <resource_loader/font_loader.h>
 
 struct GLResourcePool {
     GLResourcePool(Resource::ResourcePool pool, RenderConfig config);
@@ -21,7 +20,7 @@ struct GLResourcePool {
     void unloadGPU();
 
     TextureLoaderGL* texLoader;
-    Resource::GLFontLoader* fontLoader;
+    InternalFontLoader* fontLoader;
     Resource::GLModelRender* modelLoader;
     Resource::ResourcePool poolID;
     bool usingGPUResources = false;
