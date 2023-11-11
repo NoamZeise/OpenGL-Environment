@@ -74,7 +74,7 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData) {
   template <class T_Vert>
   Model GLModelRender::loadModelInfo(ModelInfo::Model& model,
 				     ModelGroup<T_Vert>& modelGroup,
-				     GLTextureLoader* texLoader,
+				     TextureLoaderGL* texLoader,
 				     std::vector<ModelAnimation> *pGetAnimations) {
       Model userModel(currentIndex++, getModelType(T_Vert()), pool);
       modelGroup.loadModel(model, userModel.ID);
@@ -93,14 +93,14 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData) {
       return userModel;
   }
 
-  Model GLModelRender::loadModel(ModelType type, std::string path, GLTextureLoader *texLoader,
+  Model GLModelRender::loadModel(ModelType type, std::string path, TextureLoaderGL *texLoader,
 				 std::vector<ModelAnimation> *pGetAnimations) {
       ModelInfo::Model fileModel = loadModelFromFile(path);
       return loadModel(type, fileModel, texLoader, pGetAnimations);
   }
 
   Model GLModelRender::loadModel(ModelType type, ModelInfo::Model& model,
-				 GLTextureLoader *texLoader,
+				 TextureLoaderGL *texLoader,
 				 std::vector<ModelAnimation> *pGetAnimations) {
       switch(type) {
       case ModelType::m2D:
@@ -117,7 +117,7 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData) {
       loadedModels[quadIndex]->meshes[0].vertexData->DrawInstanced(GL_TRIANGLES, count);
   }
 
-  void GLModelRender::DrawModel(Model model, GLTextureLoader* texLoader,
+  void GLModelRender::DrawModel(Model model, TextureLoaderGL* texLoader,
 				uint32_t spriteColourShaderLoc) {
       if(model.ID >= loadedModels.size()) {
 	  LOG_ERROR("model ID out of range");
@@ -134,7 +134,7 @@ void GLModelRender::addLoadedModel(LoadedModel<T_Vert>* modelData) {
   }
 
   void GLModelRender::DrawModelInstanced(Model model, glm::vec4 colour,
-					 GLTextureLoader* texLoader,
+					 TextureLoaderGL* texLoader,
 					 int count, uint32_t spriteColourShaderLoc,
 					 uint32_t enableTexShaderLoc) {
       if(model.ID >= loadedModels.size()) {

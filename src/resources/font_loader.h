@@ -20,7 +20,7 @@ public:
     void loadToGPU();
     void UnloadStaged();
     void UnloadGpu();
-    Font LoadFont(std::string file, GLTextureLoader* texLoader);
+    Font LoadFont(std::string file, TextureLoaderGL* texLoader);
     std::vector<QuadDraw> DrawString(Font drawfont, std::string text, glm::vec2 position,
 				     float size, float depth, glm::vec4 colour, float rotate);
     float MeasureString(Font font, std::string text, float size);

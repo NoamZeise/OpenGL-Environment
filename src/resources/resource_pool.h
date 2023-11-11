@@ -20,7 +20,7 @@ struct GLResourcePool {
     void unloadStaged();
     void unloadGPU();
 
-    Resource::GLTextureLoader* texLoader;
+    TextureLoaderGL* texLoader;
     Resource::GLFontLoader* fontLoader;
     Resource::GLModelRender* modelLoader;
     Resource::ResourcePool poolID;

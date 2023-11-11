@@ -4,9 +4,7 @@
 
 GLResourcePool::GLResourcePool(Resource::ResourcePool pool, RenderConfig config) {
     poolID = pool;
-    texLoader = new Resource::GLTextureLoader(config.mip_mapping,
-					      config.texture_filter_nearest,
-					      poolID);
+    texLoader = new TextureLoaderGL(pool, config);
     fontLoader = new Resource::GLFontLoader(poolID);
     modelLoader = new Resource::GLModelRender(poolID);
 }
@@ -29,7 +27,7 @@ Resource::Model GLResourcePool::loadModel(Resource::ModelType type, ModelInfo::M
 
 void GLResourcePool::loadGpu() {
     LOG("loading to GPU");
-    texLoader->loadToGPU();
+    texLoader->loadGPU();
     fontLoader->loadToGPU();
     modelLoader->loadGPU();
     LOG("finished loading to GPU");

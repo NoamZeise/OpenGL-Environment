@@ -23,19 +23,19 @@ namespace Resource {
   public:
       GLModelRender(Resource::ResourcePool pool);
       ~GLModelRender();
-      Model loadModel(ModelType type, std::string path, GLTextureLoader *texLoader,
+      Model loadModel(ModelType type, std::string path, TextureLoaderGL *texLoader,
 		      std::vector<ModelAnimation> *pGetAnimations);
-      Model loadModel(ModelType type, ModelInfo::Model& model, GLTextureLoader *texLoader,
+      Model loadModel(ModelType type, ModelInfo::Model& model, TextureLoaderGL *texLoader,
 		      std::vector<ModelAnimation> *pGetAnimations);
       void loadGPU();
       void unloadStaged();
       void unloadGPU();
       
       void DrawQuad(int count);
-      void DrawModel(Model model, GLTextureLoader *texLoader,
+      void DrawModel(Model model, TextureLoaderGL *texLoader,
 		     uint32_t spriteColourShaderLoc);
       void DrawModelInstanced(Model model, glm::vec4 colour,
-			      GLTextureLoader *texLoader, int count,
+			      TextureLoaderGL *texLoader, int count,
 			      uint32_t spriteColourShaderLoc,
 			      uint32_t enableTexShaderLoc);
 
@@ -56,7 +56,7 @@ namespace Resource {
       
       template <class T_Vert>
       Model loadModelInfo(ModelInfo::Model& model, ModelGroup<T_Vert>& modelGroup,
-			  GLTextureLoader* texLoader, std::vector<ModelAnimation> *pGetAnimations);
+			  TextureLoaderGL* texLoader, std::vector<ModelAnimation> *pGetAnimations);
       ModelInfo::Model loadModelFromFile(std::string path);
       template <class T_Vert>
       void addLoadedModel(LoadedModel<T_Vert>* model);

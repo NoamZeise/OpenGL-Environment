@@ -35,7 +35,7 @@ namespace Resource {
       fontsUnload(inGpu);
   }
 
-  Font GLFontLoader::LoadFont(std::string file, GLTextureLoader *texLoader) {
+  Font GLFontLoader::LoadFont(std::string file, TextureLoaderGL *texLoader) {
       LOG("loading font: " << file << " ID: " << staged.size());
       FontData* d = loadFont(file, FONT_LOAD_SIZE);
       Resource::Texture t = texLoader->LoadTexture(d->textureData,
