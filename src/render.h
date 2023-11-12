@@ -42,19 +42,19 @@ namespace glenv {
       ~RenderGl();
 
       Resource::Texture LoadTexture(std::string filepath);
-      Resource::Texture LoadTexture(Resource::ResourcePool pool, std::string path);
+      Resource::Texture LoadTexture(Resource::Pool pool, std::string path);
       // 4 channels assumed
       Resource::Texture LoadTexture(unsigned char* data, int width, int height);
-      Resource::Texture LoadTexture(Resource::ResourcePool pool, unsigned char* data,
+      Resource::Texture LoadTexture(Resource::Pool pool, unsigned char* data,
 				    int width, int height);
       Resource::Model LoadModel(Resource::ModelType type, std::string filepath,
 				std::vector<Resource::ModelAnimation> *pAnimations);
-      Resource::Model LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+      Resource::Model LoadModel(Resource::Pool pool, Resource::ModelType type,
 				std::string filepath,
 				std::vector<Resource::ModelAnimation> *pAnimations);
       Resource::Model LoadModel(Resource::ModelType type, ModelInfo::Model& model,
 				std::vector<Resource::ModelAnimation> *pAnimations);
-      Resource::Model LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+      Resource::Model LoadModel(Resource::Pool pool, Resource::ModelType type,
 				ModelInfo::Model& model,
 				std::vector<Resource::ModelAnimation> *pAnimations);
       Resource::Model Load3DModel(std::string filepath);
@@ -63,15 +63,15 @@ namespace glenv {
 					std::vector<Resource::ModelAnimation> *pGetAnimations);
 
       Resource::Font LoadFont(std::string filepath);
-      Resource::Font LoadFont(Resource::ResourcePool pool, std::string filepath);
+      Resource::Font LoadFont(Resource::Pool pool, std::string filepath);
 
-      Resource::ResourcePool CreateResourcePool();
-      void DestroyResourcePool(Resource::ResourcePool pool);
+      Resource::Pool CreateResourcePool();
+      void DestroyResourcePool(Resource::Pool pool);
       // does notging in OGL version
-      void setResourcePoolInUse(Resource::ResourcePool pool, bool usePool) {}
+      void setResourcePoolInUse(Resource::Pool pool, bool usePool) {}
       
       void LoadResourcesToGPU();
-      void LoadResourcesToGPU(Resource::ResourcePool pool);
+      void LoadResourcesToGPU(Resource::Pool pool);
       // does nothing in OGL version
       void UseLoadedResources() {}
 
@@ -117,9 +117,9 @@ namespace glenv {
       void setVPshader(GLShader *shader);
       void setLightingShader(GLShader *shader);
 
-      bool _validPool(Resource::ResourcePool pool);
-      void _throwIfPoolInvaid(Resource::ResourcePool pool);
-      bool _poolInUse(Resource::ResourcePool pool);
+      bool _validPool(Resource::Pool pool);
+      void _throwIfPoolInvaid(Resource::Pool pool);
+      bool _poolInUse(Resource::Pool pool);
 
       BPLighting lighting;
       RenderConfig renderConf;
@@ -150,7 +150,7 @@ namespace glenv {
 
       bool inDraw = false;
 
-      Resource::ResourcePool defaultPool;
+      Resource::Pool defaultPool;
       std::vector<GLResourcePool*> pools;
       std::vector<int> freePools;
 

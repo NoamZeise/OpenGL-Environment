@@ -1,78 +1,41 @@
 #ifndef GL_MODEL_RENDER_H
 #define GL_MODEL_RENDER_H
 
-#ifndef NO_ASSIMP
-#include <assimp/Importer.hpp>
-#include <assimp/scene.h>
-#include <assimp/postprocess.h>
-#endif
-
 #include "vertex_data.h"
-#include "texture_loader.h"
-#include <glm/glm.hpp>
-
-#ifndef NO_ASSIMP
+#include <resource_loader/texture_loader.h>
 #include <resource_loader/model_loader.h>
-#endif
 #include <resource_loader/vertex_model.h>
-#include <graphics/resources.h>
 
-namespace Resource {
+class GLModelRender : public InternalModelLoader {
+public:
+    GLModelRender(Resource::Pool pool, InternalTexLoader *texLoader);
+    void loadGPU() override;
+    void clearGPU() override;
+    void DrawQuad(int count);
+    void DrawModel(Resource::Model model, uint32_t spriteColourShaderLoc);
+    void DrawModelInstanced(Resource::Model model, glm::vec4 colour, int count,
+			    uint32_t spriteColourShaderLoc,
+			    uint32_t enableTexShaderLoc);
+    Resource::ModelAnimation getAnimation(Resource::Model model, std::string animation) override;
+    Resource::ModelAnimation getAnimation(Resource::Model model, int index) override;
 
-  class GLModelRender {
-  public:
-      GLModelRender(Resource::ResourcePool pool);
-      ~GLModelRender();
-      Model loadModel(ModelType type, std::string path, TextureLoaderGL *texLoader,
-		      std::vector<ModelAnimation> *pGetAnimations);
-      Model loadModel(ModelType type, ModelInfo::Model& model, TextureLoaderGL *texLoader,
-		      std::vector<ModelAnimation> *pGetAnimations);
-      void loadGPU();
-      void unloadStaged();
-      void unloadGPU();
-      
-      void DrawQuad(int count);
-      void DrawModel(Model model, TextureLoaderGL *texLoader,
-		     uint32_t spriteColourShaderLoc);
-      void DrawModelInstanced(Model model, glm::vec4 colour,
-			      TextureLoaderGL *texLoader, int count,
-			      uint32_t spriteColourShaderLoc,
-			      uint32_t enableTexShaderLoc);
-
-  private:
-      struct GLMesh {
-	  GLVertexData *vertexData;
-	  Texture texture;
-	  glm::vec4 diffuseColour;
-      };
-      struct GLLoadedModel {
-	  GLLoadedModel(){}
-	  ~GLLoadedModel();
-	  std::vector<GLMesh> meshes;
-	  std::string directory;
-      };
-
-      void loadQuad();
-      
-      template <class T_Vert>
-      Model loadModelInfo(ModelInfo::Model& model, ModelGroup<T_Vert>& modelGroup,
-			  TextureLoaderGL* texLoader, std::vector<ModelAnimation> *pGetAnimations);
-      ModelInfo::Model loadModelFromFile(std::string path);
-      template <class T_Vert>
-      void addLoadedModel(LoadedModel<T_Vert>* model);
-#ifndef NO_ASSIMP
-      ModelLoader modelLoader;
-#endif
-      Resource::ResourcePool pool;
-      std::vector<GLLoadedModel *> loadedModels;
-      uint32_t quadIndex;
-
-      uint32_t currentIndex = 0;
-      ModelGroup<Vertex2D> loaded2D;
-      ModelGroup<Vertex3D> loaded3D;
-      ModelGroup<VertexAnim3D> loadedAnim3D;
-  };
-
-} // namespace Resource
+private:
+    struct GLMesh {
+	GLVertexData *vertexData;
+	Resource::Texture texture;
+	glm::vec4 diffuseColour;
+    };
+    struct GLLoadedModel {
+	GLLoadedModel(){}
+	~GLLoadedModel();
+	std::vector<GLMesh> meshes;
+	std::string directory;
+    };
+    template <class T_Vert>
+    void addLoadedModel(LoadedModel<T_Vert>* model);
+    std::vector<GLLoadedModel *> loadedModels;
+    void draw(Resource::Model model, glm::vec4 colour, int count,
+	      uint32_t colLoc, uint32_t enableTexLoc);
+};
 
 #endif

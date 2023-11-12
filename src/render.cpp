@@ -86,7 +86,7 @@ namespace glenv {
 	  delete pool;
   }
 
-  Resource::ResourcePool RenderGl::CreateResourcePool() {
+  Resource::Pool RenderGl::CreateResourcePool() {
       int index = pools.size();
       if(freePools.empty()) {
 	  pools.push_back(nullptr);
@@ -94,10 +94,10 @@ namespace glenv {
 	  index = freePools.back();
 	  freePools.pop_back();
       }
-      pools[index] = new GLResourcePool(Resource::ResourcePool(index), renderConf);
+      pools[index] = new GLResourcePool(Resource::Pool(index), renderConf);
       return pools[index]->poolID;
   }
-  void RenderGl::DestroyResourcePool(Resource::ResourcePool pool) {
+  void RenderGl::DestroyResourcePool(Resource::Pool pool) {
       for(int i = 0; i < pools.size(); i++) {
 	  if(pools[i]->poolID.ID == pool.ID) {
 	      delete pools[i];
@@ -107,7 +107,7 @@ namespace glenv {
       }
   }
   
-  Resource::Texture RenderGl::LoadTexture(Resource::ResourcePool pool, std::string path) {
+  Resource::Texture RenderGl::LoadTexture(Resource::Pool pool, std::string path) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->texLoader->LoadTexture(path);
   }
@@ -116,7 +116,7 @@ namespace glenv {
       return LoadTexture(defaultPool, filepath);
   }
 
-  Resource::Texture RenderGl::LoadTexture(Resource::ResourcePool pool, unsigned char* data,
+  Resource::Texture RenderGl::LoadTexture(Resource::Pool pool, unsigned char* data,
 					  int width, int height) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->texLoader->LoadTexture(data, width, height, 4);
@@ -131,11 +131,11 @@ namespace glenv {
       return LoadModel(defaultPool, type, filepath, pAnimations);
   }
   
-  Resource::Model RenderGl::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+  Resource::Model RenderGl::LoadModel(Resource::Pool pool, Resource::ModelType type,
 				      std::string filepath,
 				      std::vector<Resource::ModelAnimation> *pAnimations) {
       _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->loadModel(type, filepath, pAnimations);
+      return pools[pool.ID]->modelLoader->LoadModel(type, filepath, pAnimations);
   }
   
   Resource::Model RenderGl::LoadModel(Resource::ModelType type, ModelInfo::Model& model,
@@ -143,21 +143,21 @@ namespace glenv {
       return LoadModel(defaultPool, type, model, pAnimations);
   }
   
-  Resource::Model RenderGl::LoadModel(Resource::ResourcePool pool, Resource::ModelType type,
+  Resource::Model RenderGl::LoadModel(Resource::Pool pool, Resource::ModelType type,
 				      ModelInfo::Model& model,
 				      std::vector<Resource::ModelAnimation> *pAnimations) {
       _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->loadModel(type, model, pAnimations);
+      return pools[pool.ID]->modelLoader->LoadModel(type, model, pAnimations);
   }
   
   Resource::Model RenderGl::loadModel(Resource::ModelType type, std::string filepath,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return pools[defaultPool.ID]->modelLoader->loadModel(type, filepath, pools[defaultPool.ID]->texLoader, pGetAnimations);
+      return pools[defaultPool.ID]->modelLoader->LoadModel(type, filepath, pGetAnimations);
   }
 
   Resource::Model RenderGl::loadModel(Resource::ModelType type, ModelInfo::Model model,
 				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return pools[defaultPool.ID]->modelLoader->loadModel(type, model, pools[defaultPool.ID]->texLoader, pGetAnimations);
+      return pools[defaultPool.ID]->modelLoader->LoadModel(type, model, pGetAnimations);
   }
 
   Resource::Model RenderGl::Load3DModel(std::string filepath) {
@@ -177,12 +177,12 @@ namespace glenv {
       return LoadFont(defaultPool, filepath);
   }
 
-  Resource::Font RenderGl::LoadFont(Resource::ResourcePool pool, std::string filepath) {
+  Resource::Font RenderGl::LoadFont(Resource::Pool pool, std::string filepath) {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID]->fontLoader->LoadFont(filepath);
   }
 
-  void RenderGl::LoadResourcesToGPU(Resource::ResourcePool pool) {
+  void RenderGl::LoadResourcesToGPU(Resource::Pool pool) {
       _throwIfPoolInvaid(pool);
       pools[pool.ID]->loadGpu();
   }
@@ -395,7 +395,7 @@ namespace glenv {
       ogl_helper::shaderStorageBufferData(model2DSSBO, sizeAndPtr(perInstance2DModel), 4);
       ogl_helper::shaderStorageBufferData(texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset), 5);
       glActiveTexture(GL_TEXTURE0);
-      pools[texture.pool.ID]->texLoader->Bind(texture);
+      glBindTexture(GL_TEXTURE_2D, pools[texture.pool.ID]->texLoader->getViewIndex(texture));
       pools[texture.pool.ID]->modelLoader->DrawQuad(drawCount);
   }
 
@@ -407,11 +407,11 @@ namespace glenv {
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
       pools[model.pool.ID]->modelLoader->DrawModelInstanced(
-	      model, colour, pools[model.pool.ID]->texLoader, drawCount,
+	      model, colour, drawCount,
 	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
-  bool RenderGl::_validPool(Resource::ResourcePool pool) {
+  bool RenderGl::_validPool(Resource::Pool pool) {
       if(pool.ID > pools.size() || pools[pool.ID] == nullptr) {
 	  LOG_ERROR("Passed Pool does not exist."
 		    " It has either been destroyed or was never created.");
@@ -420,11 +420,11 @@ namespace glenv {
       return true;
   }
 
-  bool RenderGl::_poolInUse(Resource::ResourcePool pool) {
+  bool RenderGl::_poolInUse(Resource::Pool pool) {
     return _validPool(pool) && pools[pool.ID]->usingGPUResources;
   }
 
-  void RenderGl::_throwIfPoolInvaid(Resource::ResourcePool pool) {
+  void RenderGl::_throwIfPoolInvaid(Resource::Pool pool) {
       if(!_validPool(pool))
 	  throw std::runtime_error("Tried to load resource "
 				   "with a pool that does not exist");
@@ -435,7 +435,7 @@ namespace glenv {
 	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
 	  return;
       }
-      pools[model.pool.ID]->modelLoader->DrawModel(model, pools[model.pool.ID]->texLoader, shader3DAnim->Location("spriteColour"));
+      pools[model.pool.ID]->modelLoader->DrawModel(model, shader3DAnim->Location("spriteColour"));
   }
 
   void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {

@@ -6,14 +6,8 @@
 #include <resource_loader/font_loader.h>
 
 struct GLResourcePool {
-    GLResourcePool(Resource::ResourcePool pool, RenderConfig config);
+    GLResourcePool(Resource::Pool pool, RenderConfig config);
     ~GLResourcePool();
-
-    Resource::Model loadModel(Resource::ModelType type, std::string path,
-			      std::vector<Resource::ModelAnimation> *pGetAnimations);
-
-    Resource::Model loadModel(Resource::ModelType type, ModelInfo::Model &model,
-			      std::vector<Resource::ModelAnimation> *pGetAnimations);
 
     void loadGpu();
     void unloadStaged();
@@ -21,8 +15,8 @@ struct GLResourcePool {
 
     TextureLoaderGL* texLoader;
     InternalFontLoader* fontLoader;
-    Resource::GLModelRender* modelLoader;
-    Resource::ResourcePool poolID;
+    GLModelRender* modelLoader;
+    Resource::Pool poolID;
     bool usingGPUResources = false;
 };
 

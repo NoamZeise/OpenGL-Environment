@@ -3,7 +3,7 @@
 #include <graphics/logger.h>
 #include "../ogl_helper.h"
 
-TextureLoaderGL::TextureLoaderGL(Resource::ResourcePool pool, RenderConfig conf)
+TextureLoaderGL::TextureLoaderGL(Resource::Pool pool, RenderConfig conf)
     : InternalTexLoader(pool, conf) {}
 
 void TextureLoaderGL::loadGPU() {
@@ -43,12 +43,12 @@ void TextureLoaderGL::clearGPU() {
     inGpu.clear(); 
 }
   
-void TextureLoaderGL::Bind(Resource::Texture tex) {
+unsigned int TextureLoaderGL::getViewIndex(Resource::Texture tex) {
     if (tex.ID >= inGpu.size()) {
 	LOG_ERROR("in pool: " << tex.pool.ID <<
 		  " texture ID out of range: " << tex.ID
 		  << " max: " << inGpu.size());
-	return;
+	return 0;
     }
-    glBindTexture(GL_TEXTURE_2D, inGpu[tex.ID]);
+    return inGpu[tex.ID];
 }
