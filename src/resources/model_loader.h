@@ -6,9 +6,11 @@
 #include <resource_loader/model_loader.h>
 #include <resource_loader/vertex_model.h>
 
-class GLModelRender : public InternalModelLoader {
+struct GPUModelGL;
+
+class ModelLoaderGL : public InternalModelLoader {
 public:
-    GLModelRender(Resource::Pool pool, InternalTexLoader *texLoader);
+    ModelLoaderGL(Resource::Pool pool, InternalTexLoader *texLoader);
     void loadGPU() override;
     void clearGPU() override;
     void DrawQuad(int count);
@@ -20,20 +22,9 @@ public:
     Resource::ModelAnimation getAnimation(Resource::Model model, int index) override;
 
 private:
-    struct GLMesh {
-	GLVertexData *vertexData;
-	Resource::Texture texture;
-	glm::vec4 diffuseColour;
-    };
-    struct GLLoadedModel {
-	GLLoadedModel(){}
-	~GLLoadedModel();
-	std::vector<GLMesh> meshes;
-	std::string directory;
-    };
-    template <class T_Vert>
-    void addLoadedModel(LoadedModel<T_Vert>* model);
-    std::vector<GLLoadedModel *> loadedModels;
+    std::vector<GPUModel*> getModel() override { return models; }
+    
+    std::vector<GPUModelGL*> models;
     void draw(Resource::Model model, glm::vec4 colour, int count,
 	      uint32_t colLoc, uint32_t enableTexLoc);
 };

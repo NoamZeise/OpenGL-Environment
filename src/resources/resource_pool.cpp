@@ -5,7 +5,7 @@
 GLResourcePool::GLResourcePool(Resource::Pool pool, RenderConfig config) {
     poolID = pool;
     texLoader = new TextureLoaderGL(pool, config);
-    modelLoader = new GLModelRender(pool, texLoader);
+    modelLoader = new ModelLoaderGL(pool, texLoader);
     fontLoader = new InternalFontLoader(pool, texLoader);
 }
 
