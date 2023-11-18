@@ -27,6 +27,7 @@ struct GLMesh : public GPUMesh {
 
 struct GPUModelGL : public GPUModel {
   std::vector<GLMesh> meshes;
+    
   template <typename T_Vert>
   GPUModelGL(LoadedModel<T_Vert> &data) : GPUModel(data) {
       meshes.resize(data.meshes.size());
@@ -35,7 +36,8 @@ struct GPUModelGL : public GPUModel {
 	  meshes[i].vertexData = new GLVertexData(mesh->verticies, mesh->indices);
 	  meshes[i].load(mesh);
       }
-    }   
+    }
+    
     ~GPUModelGL() {
 	for (auto &mesh : meshes)
 	    delete mesh.vertexData;
@@ -88,9 +90,8 @@ void ModelLoaderGL::DrawModelInstanced(Resource::Model model, glm::vec4 colour,
 void ModelLoaderGL::draw(Resource::Model model, glm::vec4 colour, int count,
                          uint32_t colLoc, uint32_t enableTexLoc) {
     if(model.ID >= models.size()) {
-	LOG_ERROR("Model Draw: ID out of range. ID: "
-		  << model.ID << " - model size: "
-		  << models.size());
+	LOG_ERROR("in draw with out of range model. id: "
+                  << model.ID << " -  model count: " << models.size());
 	return;
     }
     models[model.ID]->draw(colour, count, texLoader, colLoc, enableTexLoc);
@@ -99,31 +100,19 @@ void ModelLoaderGL::draw(Resource::Model model, glm::vec4 colour, int count,
 
 Resource::ModelAnimation ModelLoaderGL::getAnimation(Resource::Model model,
                                                      std::string animation) {
-    if (model.ID >= models.size()) {
-        LOG_ERROR("Requested animation with out of range model. id: "
+    if(model.ID >= models.size()) {
+	LOG_ERROR("in getAnimation with out of range model. id: "
                   << model.ID << " -  model count: " << models.size());
 	return Resource::ModelAnimation();
     }
-    if (models[model.ID]->animationMap.find(animation) == models[model.ID]->animationMap.end()) {
-        LOG_ERROR("No animation called " << animation << " could be found in the"
-		  " animation map for model with id" << model.ID);
-	return Resource::ModelAnimation();
-    }        
-    return getAnimation(model, models[model.ID]->animationMap[animation]);       
+    return models[model.ID]->getAnimation(animation);
 }
 
 Resource::ModelAnimation ModelLoaderGL::getAnimation(Resource::Model model, int index) {
-    if (model.ID >= models.size()) {
-        LOG_ERROR("Requested animation with out of range model. id: "
+    if(model.ID >= models.size()) {
+	LOG_ERROR("in getAnimation with out of range model. id: "
                   << model.ID << " -  model count: " << models.size());
 	return Resource::ModelAnimation();
     }
-    if (index >= models[model.ID]->animations.size()) {
-        LOG_ERROR("Model animation index was out of range. "
-                  "model id: "
-                  << model.ID << " index: " << index
-                  << " - size: " << models[model.ID]->animations.size());
-	return Resource::ModelAnimation();
-    }        
-    return models[model.ID]->animations[index];
+    return models[model.ID]->getAnimation(index);
 }
