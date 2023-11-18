@@ -22,7 +22,7 @@ public:
     Resource::ModelAnimation getAnimation(Resource::Model model, int index) override;
 
 private:
-    std::vector<GPUModel*> getModel() override { return models; }
+    //std::vector<GPUModel*> getModel() override { return models; }
     
     std::vector<GPUModelGL*> models;
     void draw(Resource::Model model, glm::vec4 colour, int count,

@@ -2,26 +2,51 @@
 #include <graphics/logger.h>
 
 struct GLMesh : public GPUMesh {
-  GLVertexData *vertexData;
+    GLVertexData *vertexData;
+
+    void draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader,
+	      int colLoc, int enableTexLoc) {
+	glActiveTexture(GL_TEXTURE0);
+	if(texture.ID != UINT32_MAX)
+	    glBindTexture(GL_TEXTURE_2D, texLoader->getViewIndex(texture));
+	glUniform4fv(colLoc, 1,
+		     colour.a == 0.0f ? &diffuseColour[0] :
+		     &colour[0]);
+	if(enableTexLoc != 0) {
+	    if(texture.ID == UINT32_MAX)
+		glUniform1i(enableTexLoc, GL_FALSE);
+	    else
+		glUniform1i(enableTexLoc, GL_TRUE);
+	}
+	if(instanceCount > 1)
+	    vertexData->DrawInstanced(GL_TRIANGLES, instanceCount);
+	else
+	    vertexData->Draw(GL_TRIANGLES);
+    }
 };
 
 struct GPUModelGL : public GPUModel {
   std::vector<GLMesh> meshes;
   template <typename T_Vert>
-  GPUModelGL(LoadedModel<T_Vert> data) {
-      T_Vert vert = T_Vert();
-      meshes.resize(data->meshes.size());
-      for (int i = 0; i < data->meshes.size(); i++) {
-	  Mesh<T_Vert> *mesh = data->meshes[i];
+  GPUModelGL(LoadedModel<T_Vert> &data) : GPUModel(data) {
+      meshes.resize(data.meshes.size());
+      for (int i = 0; i < meshes.size(); i++) {
+	  Mesh<T_Vert> *mesh = data.meshes[i];
 	  meshes[i].vertexData = new GLVertexData(mesh->verticies, mesh->indices);
 	  meshes[i].load(mesh);
       }
-      setAnimations(data);
     }   
     ~GPUModelGL() {
 	for (auto &mesh : meshes)
 	    delete mesh.vertexData;
-    }       
+    }
+
+    void draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader, int colLoc,
+	      int enableTexLoc) {
+	for (auto& mesh: meshes) {
+	    mesh.draw(colour, instanceCount, texLoader, colLoc, enableTexLoc);
+	}
+    }
 };
 
 ModelLoaderGL::ModelLoaderGL(Resource::Pool pool, InternalTexLoader *texLoader)
@@ -38,11 +63,11 @@ void ModelLoaderGL::loadGPU() {
     loadQuad();
     models.resize(currentIndex);
     for(auto &model: stage2D.models)
-	models.push_back(new GPUModelGL(model));
+	models[model.ID] = new GPUModelGL(model);
     for(auto &model: stage3D.models)
-	models.push_back(new GPUModelGL(model));
+	models[model.ID] = new GPUModelGL(model);
     for(auto &model: stageAnim3D.models)
-	models.push_back(new GPUModelGL(model));
+	models[model.ID] = new GPUModelGL(model);
     clearStaged();
 }
 
@@ -68,25 +93,8 @@ void ModelLoaderGL::draw(Resource::Model model, glm::vec4 colour, int count,
 		  << models.size());
 	return;
     }
+    models[model.ID]->draw(colour, count, texLoader, colLoc, enableTexLoc);
 
-    for (auto& mesh: models[model.ID]->meshes) {
-	glActiveTexture(GL_TEXTURE0);
-	if(mesh.texture.ID != UINT32_MAX)
-	    glBindTexture(GL_TEXTURE_2D, texLoader->getViewIndex(mesh.texture));
-	glUniform4fv(colLoc, 1,
-		     colour.a == 0.0f ? &mesh.diffuseColour[0] :
-		     &colour[0]);
-	if(enableTexLoc != 0) {
-	    if(mesh.texture.ID == UINT32_MAX)
-		glUniform1i(enableTexLoc, GL_FALSE);
-	    else
-		glUniform1i(enableTexLoc, GL_TRUE);
-	}
-	if(count > 1)
-	    mesh.vertexData->DrawInstanced(GL_TRIANGLES, count);
-	else
-	    mesh.vertexData->Draw(GL_TRIANGLES);
-    }
 }
 
 Resource::ModelAnimation ModelLoaderGL::getAnimation(Resource::Model model,
