@@ -3,7 +3,7 @@
 #include <graphics/logger.h>
 
 GLResourcePool::GLResourcePool(Resource::Pool pool, RenderConfig config) {
-    poolID = pool;
+    this->pool = pool;
     texLoader = new TextureLoaderGL(pool, config);
     modelLoader = new ModelLoaderGL(pool, texLoader);
     fontLoader = new InternalFontLoader(pool, texLoader);

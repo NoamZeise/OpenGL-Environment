@@ -4,8 +4,9 @@
 #include "texture_loader.h"
 #include "model_loader.h"
 #include <resource_loader/font_loader.h>
+#include <graphics/resource_pool.h>
 
-struct GLResourcePool {
+struct GLResourcePool : public ResourcePool {
     GLResourcePool(Resource::Pool pool, RenderConfig config);
     ~GLResourcePool();
 
@@ -13,10 +14,13 @@ struct GLResourcePool {
     void unloadStaged();
     void unloadGPU();
 
+    ModelLoader* model() override { return modelLoader; }
+    TextureLoader* tex() override { return texLoader; }
+    FontLoader* font()   override { return fontLoader; }
+
     TextureLoaderGL* texLoader;
     InternalFontLoader* fontLoader;
     ModelLoaderGL* modelLoader;
-    Resource::Pool poolID;
     bool usingGPUResources = false;
 };
 

@@ -95,16 +95,21 @@ namespace glenv {
 	  freePools.pop_back();
       }
       pools[index] = new GLResourcePool(Resource::Pool(index), renderConf);
-      return pools[index]->poolID;
+      return pools[index]->resPool();
   }
   void RenderGl::DestroyResourcePool(Resource::Pool pool) {
       for(int i = 0; i < pools.size(); i++) {
-	  if(pools[i]->poolID.ID == pool.ID) {
+	  if(pools[i]->resPool().ID == pool.ID) {
 	      delete pools[i];
 	      pools[i] = nullptr;
 	      freePools.push_back(i);
 	  }
       }
+  }
+
+  ResourcePool* RenderGl::pool(Resource::Pool pool) {
+      _throwIfPoolInvaid(pool);
+      return pools[pool.ID];
   }
   
   Resource::Texture RenderGl::LoadTexture(Resource::Pool pool, std::string path) {

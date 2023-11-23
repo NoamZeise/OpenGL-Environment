@@ -69,6 +69,7 @@ namespace glenv {
       void DestroyResourcePool(Resource::Pool pool);
       // does notging in OGL version
       void setResourcePoolInUse(Resource::Pool pool, bool usePool) {}
+      ResourcePool* pool(Resource::Pool pool) override;
       
       void LoadResourcesToGPU();
       void LoadResourcesToGPU(Resource::Pool pool);
