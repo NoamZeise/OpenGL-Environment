@@ -66,7 +66,7 @@ namespace glenv {
       ogl_helper::createShaderStorageBuffer(&texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset));
       LOG("shader buffers created");
       
-      defaultPool = CreateResourcePool();
+      defaultPool = CreateResourcePool()->id();
       FramebufferResize();
       setLightingProps(BPLighting());
       LOG("renderer initialized");
@@ -86,7 +86,7 @@ namespace glenv {
 	  delete pool;
   }
 
-  Resource::Pool RenderGl::CreateResourcePool() {
+  ResourcePool* RenderGl::CreateResourcePool() {
       int index = pools.size();
       if(freePools.empty()) {
 	  pools.push_back(nullptr);
@@ -95,11 +95,11 @@ namespace glenv {
 	  freePools.pop_back();
       }
       pools[index] = new GLResourcePool(Resource::Pool(index), renderConf);
-      return pools[index]->resPool();
+      return pools[index];
   }
   void RenderGl::DestroyResourcePool(Resource::Pool pool) {
       for(int i = 0; i < pools.size(); i++) {
-	  if(pools[i]->resPool().ID == pool.ID) {
+	  if(pools[i]->id().ID == pool.ID) {
 	      delete pools[i];
 	      pools[i] = nullptr;
 	      freePools.push_back(i);
@@ -111,89 +111,10 @@ namespace glenv {
       _throwIfPoolInvaid(pool);
       return pools[pool.ID];
   }
-  
-  Resource::Texture RenderGl::LoadTexture(Resource::Pool pool, std::string path) {
-      _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->texLoader->LoadTexture(path);
-  }
-
-  Resource::Texture RenderGl::LoadTexture(std::string filepath) {
-      return LoadTexture(defaultPool, filepath);
-  }
-
-  Resource::Texture RenderGl::LoadTexture(Resource::Pool pool, unsigned char* data,
-					  int width, int height) {
-      _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->texLoader->LoadTexture(data, width, height, 4);
-  }
-  
-  Resource::Texture RenderGl::LoadTexture(unsigned char* data, int width, int height) {
-      return LoadTexture(defaultPool, data, width, height);
-  }
-
-  Resource::Model RenderGl::LoadModel(Resource::ModelType type, std::string filepath,
-				      std::vector<Resource::ModelAnimation> *pAnimations) {
-      return LoadModel(defaultPool, type, filepath, pAnimations);
-  }
-  
-  Resource::Model RenderGl::LoadModel(Resource::Pool pool, Resource::ModelType type,
-				      std::string filepath,
-				      std::vector<Resource::ModelAnimation> *pAnimations) {
-      _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->modelLoader->LoadModel(type, filepath, pAnimations);
-  }
-  
-  Resource::Model RenderGl::LoadModel(Resource::ModelType type, ModelInfo::Model& model,
-			    std::vector<Resource::ModelAnimation> *pAnimations) {
-      return LoadModel(defaultPool, type, model, pAnimations);
-  }
-  
-  Resource::Model RenderGl::LoadModel(Resource::Pool pool, Resource::ModelType type,
-				      ModelInfo::Model& model,
-				      std::vector<Resource::ModelAnimation> *pAnimations) {
-      _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->modelLoader->LoadModel(type, model, pAnimations);
-  }
-  
-  Resource::Model RenderGl::loadModel(Resource::ModelType type, std::string filepath,
-				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return pools[defaultPool.ID]->modelLoader->LoadModel(type, filepath, pGetAnimations);
-  }
-
-  Resource::Model RenderGl::loadModel(Resource::ModelType type, ModelInfo::Model model,
-				      std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return pools[defaultPool.ID]->modelLoader->LoadModel(type, model, pGetAnimations);
-  }
-
-  Resource::Model RenderGl::Load3DModel(std::string filepath) {
-      return loadModel(Resource::ModelType::m3D, filepath, nullptr);
-  }
-
-  Resource::Model RenderGl::Load3DModel(ModelInfo::Model &model) {
-      return loadModel(Resource::ModelType::m3D, model, nullptr);
-  }
-
-  Resource::Model RenderGl::LoadAnimatedModel(
-	  std::string filepath, std::vector<Resource::ModelAnimation> *pGetAnimations) {
-      return loadModel(Resource::ModelType::m3D_Anim, filepath, pGetAnimations);
-  }
-
-  Resource::Font RenderGl::LoadFont(std::string filepath) {
-      return LoadFont(defaultPool, filepath);
-  }
-
-  Resource::Font RenderGl::LoadFont(Resource::Pool pool, std::string filepath) {
-      _throwIfPoolInvaid(pool);
-      return pools[pool.ID]->fontLoader->LoadFont(filepath);
-  }
-
+ 
   void RenderGl::LoadResourcesToGPU(Resource::Pool pool) {
       _throwIfPoolInvaid(pool);
       pools[pool.ID]->loadGpu();
-  }
-	   
-  void RenderGl::LoadResourcesToGPU() {
-      LoadResourcesToGPU(defaultPool);
   }
 
   RenderGl::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset) {
@@ -443,10 +364,6 @@ namespace glenv {
       pools[model.pool.ID]->modelLoader->DrawModel(model, shader3DAnim->Location("spriteColour"));
   }
 
-  void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
-      DrawModel(model, modelMatrix, normalMat, glm::vec4(0.0f));
-  }
-
   void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
 	    glm::mat4 normalMat, glm::vec4 colour) {
       if(currentDraw < MAX_DRAWS) {
@@ -480,14 +397,6 @@ namespace glenv {
       }
   }
 
-  void RenderGl::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix, glm::vec4 colour) {
-      DrawQuad(texture, modelMatrix, colour, glm::vec4(0, 0, 1, 1));
-  }
-
-  void RenderGl::DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix) {
-      DrawQuad(texture, modelMatrix, glm::vec4(1), glm::vec4(0, 0, 1, 1));
-  }
-
   void RenderGl::DrawString(Resource::Font font, std::string text, glm::vec2 position,
 			    float size, float depth, glm::vec4 colour, float rotate) {
       if(!_poolInUse(font.pool)) {
@@ -497,15 +406,6 @@ namespace glenv {
       auto draws = pools[font.pool.ID]->fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
       for(const auto &draw: draws) 
 	  DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
-  }
-
-  void RenderGl::DrawString(Resource::Font font, std::string text, glm::vec2 position, float size, float depth, glm::vec4 colour) {
-      DrawString(font, text, position, size, depth, colour, 0);
-  }
-
-  float RenderGl::MeasureString(Resource::Font font, std::string text, float size) {
-      _throwIfPoolInvaid(font.pool);
-      return pools[font.pool.ID]->fontLoader->MeasureString(font, text, size);
   }
 
   void RenderGl::FramebufferResize() {

@@ -41,72 +41,38 @@ namespace glenv {
       RenderGl(GLFWwindow* window, RenderConfig renderConf);
       ~RenderGl();
 
-      Resource::Texture LoadTexture(std::string filepath);
-      Resource::Texture LoadTexture(Resource::Pool pool, std::string path);
-      // 4 channels assumed
-      Resource::Texture LoadTexture(unsigned char* data, int width, int height);
-      Resource::Texture LoadTexture(Resource::Pool pool, unsigned char* data,
-				    int width, int height);
-      Resource::Model LoadModel(Resource::ModelType type, std::string filepath,
-				std::vector<Resource::ModelAnimation> *pAnimations);
-      Resource::Model LoadModel(Resource::Pool pool, Resource::ModelType type,
-				std::string filepath,
-				std::vector<Resource::ModelAnimation> *pAnimations);
-      Resource::Model LoadModel(Resource::ModelType type, ModelInfo::Model& model,
-				std::vector<Resource::ModelAnimation> *pAnimations);
-      Resource::Model LoadModel(Resource::Pool pool, Resource::ModelType type,
-				ModelInfo::Model& model,
-				std::vector<Resource::ModelAnimation> *pAnimations);
-      Resource::Model Load3DModel(std::string filepath);
-      Resource::Model Load3DModel(ModelInfo::Model &model);
-      Resource::Model LoadAnimatedModel(std::string filepath,
-					std::vector<Resource::ModelAnimation> *pGetAnimations);
-
-      Resource::Font LoadFont(std::string filepath);
-      Resource::Font LoadFont(Resource::Pool pool, std::string filepath);
-
-      Resource::Pool CreateResourcePool();
-      void DestroyResourcePool(Resource::Pool pool);
+      ResourcePool* CreateResourcePool() override;
+      void DestroyResourcePool(Resource::Pool pool) override;
       // does notging in OGL version
-      void setResourcePoolInUse(Resource::Pool pool, bool usePool) {}
+      void setResourcePoolInUse(Resource::Pool pool, bool usePool) override {}
       ResourcePool* pool(Resource::Pool pool) override;
       
-      void LoadResourcesToGPU();
-      void LoadResourcesToGPU(Resource::Pool pool);
+      void LoadResourcesToGPU(Resource::Pool pool) override;
       // does nothing in OGL version
-      void UseLoadedResources() {}
+      void UseLoadedResources() override {}
 
       void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
-		     glm::mat4 normalMat);
-      void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
-		     glm::mat4 normalMat, glm::vec4 colour);
+		     glm::mat4 normalMat, glm::vec4 colour) override;
       void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 			 glm::mat4 normalMatrix,
-			 Resource::ModelAnimation *animation);
+			 Resource::ModelAnimation *animation) override;
       void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix,
-		    glm::vec4 colour, glm::vec4 texOffset);
-      void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix,
-		    glm::vec4 colour);
-      void DrawQuad(Resource::Texture texture, glm::mat4 modelMatrix);
+		    glm::vec4 colour, glm::vec4 texOffset) override;
       void DrawString(Resource::Font font, std::string text, glm::vec2 position,
-		      float size, float depth, glm::vec4 colour, float rotate);
-      void DrawString(Resource::Font font, std::string text, glm::vec2 position,
-		      float size, float depth, glm::vec4 colour);
-      float MeasureString(Resource::Font font, std::string text, float size);
-      void EndDraw(std::atomic<bool> &submit);
+		      float size, float depth, glm::vec4 colour, float rotate) override;
+      void EndDraw(std::atomic<bool> &submit) override;
 
-      void FramebufferResize();
+      void FramebufferResize() override;
 
-      void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos);
-      void set2DViewMatrixAndScale(glm::mat4 view, float scale);
-      void setLightingProps(BPLighting lighting);
-      void setTargetResolution(glm::vec2 resolution);
-      glm::vec2 getTargetResolution();
-      void setRenderConf(RenderConfig renderConf);
-      RenderConfig getRenderConf();
+      void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) override;
+      void set2DViewMatrixAndScale(glm::mat4 view, float scale) override;
+      void setLightingProps(BPLighting lighting) override;
+      void setTargetResolution(glm::vec2 resolution) override;
+      glm::vec2 getTargetResolution() override;
+      void setRenderConf(RenderConfig renderConf) override;
+      RenderConfig getRenderConf() override;
 
   private:
-
       Resource::Model loadModel(Resource::ModelType type, ModelInfo::Model model,
 				std::vector<Resource::ModelAnimation> *pGetAnimations);
       Resource::Model loadModel(Resource::ModelType type, std::string filepath,
