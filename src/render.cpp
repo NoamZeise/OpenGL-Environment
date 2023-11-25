@@ -498,20 +498,6 @@ namespace glenv {
       return renderConf;
   }
 
-  void RenderGl::setTargetResolution(glm::vec2 resolution) {
-      if(renderConf.target_resolution[0] == resolution.x &&
-	 renderConf.target_resolution[1] == resolution.y)
-	  return;
-      renderConf.target_resolution[0] = resolution.x;
-      renderConf.target_resolution[1] = resolution.y;
-      FramebufferResize();
-  }
-
-  glm::vec2 RenderGl::getTargetResolution() {
-      return glm::vec2(renderConf.target_resolution[0],
-		       renderConf.target_resolution[1]);
-  }
-
   void RenderGl::setLightingProps(BPLighting lighting) {
       this->lighting = lighting;
       setLightingShader(shader3D);

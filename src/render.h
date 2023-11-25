@@ -67,8 +67,6 @@ namespace glenv {
       void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) override;
       void set2DViewMatrixAndScale(glm::mat4 view, float scale) override;
       void setLightingProps(BPLighting lighting) override;
-      void setTargetResolution(glm::vec2 resolution) override;
-      glm::vec2 getTargetResolution() override;
       void setRenderConf(RenderConfig renderConf) override;
       RenderConfig getRenderConf() override;
 
