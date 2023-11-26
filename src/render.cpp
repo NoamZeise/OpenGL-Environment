@@ -168,6 +168,11 @@ namespace glenv {
       switch(mode) {
       case DrawMode::d2D:
 	  flatShader->Use();
+	  for(int i = 0; i < 4; i++) {	
+	      for(int j = 0; j < 4; j++) {
+		  LOG("["<<i<<"]["<<j<<"] = " << proj2D[i][j]);
+	      }
+	  }
 	  glUniformMatrix4fv(flatShader->Location("projection"), 1,
 			     GL_FALSE, &proj2D[0][0]);
 	  glUniformMatrix4fv(flatShader->Location("view"), 1, GL_FALSE, &view2D[0][0]);
@@ -455,38 +460,24 @@ namespace glenv {
 	  glUniformMatrix4fv(finalShader->Location("screenTransform"),
 			     1, GL_FALSE, &finalTransform[0][0]);
       }
-      
-      proj2D = glm::ortho(
-	      0.0f,
-	      (float)targetResolution.x * scale2D,
-	      (float)targetResolution.y * scale2D,
-	      0.0f,
-	      renderConf.depth_range_2D[0],
-	      renderConf.depth_range_2D[1]);
-
-      set3DViewMatrixAndFov(view3D, fov, lighting.camPos);
       prevRenderConf = renderConf;
   }
 
-  void RenderGl::set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) {
-      this->fov = fov;
+  void RenderGl::set3DViewMat(glm::mat4 view, glm::vec4 camPos) {
       view3D = view;
-
-      float ratio =
-	  renderConf.target_resolution[0] == 0.0 ||
-	  renderConf.target_resolution[1] == 0.0 ?
-	  windowResolution.x / windowResolution.y :
-	  renderConf.target_resolution[0] / renderConf.target_resolution[1];
-      
-      proj3D = glm::perspective(glm::radians(fov), ratio,
-				renderConf.depth_range_3D[0],
-				renderConf.depth_range_3D[1]);
       lighting.camPos = camPos;
   }
 
-  void RenderGl::set2DViewMatrixAndScale(glm::mat4 view, float scale) {
+  void RenderGl::set2DViewMat(glm::mat4 view) {
       view2D = view;
-      scale2D = scale;
+  }
+
+  void RenderGl::set3DProjMat(glm::mat4 proj) {
+      proj3D = proj;
+  }
+
+  void RenderGl::set2DProjMat(glm::mat4 proj) {
+      proj2D = proj;
   }
 
   void RenderGl::setRenderConf(RenderConfig renderConf) {
@@ -504,13 +495,20 @@ namespace glenv {
       setLightingShader(shader3DAnim);
   }
   
+  glm::vec2 RenderGl::offscreenSize() {
+      return
+	  renderConf.target_resolution[0] == 0.0 ||
+	  renderConf.target_resolution[1] == 0.0 ?
+	  glm::vec2(windowResolution.x, windowResolution.y) :
+	  glm::vec2(renderConf.target_resolution[0], renderConf.target_resolution[1]);
+  }
   
 }//namespace
 
-  glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes) {
-      glm::vec2 targetResolution(renderConf.target_resolution[0],
-				 renderConf.target_resolution[1]);
-      if(targetResolution.x == 0.0 || targetResolution.y == 0.0)
-	  targetResolution = winRes;
-      return targetResolution;
-  }
+glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes) {
+    glm::vec2 targetResolution(renderConf.target_resolution[0],
+			       renderConf.target_resolution[1]);
+    if(targetResolution.x == 0.0 || targetResolution.y == 0.0)
+	targetResolution = winRes;
+    return targetResolution;
+}

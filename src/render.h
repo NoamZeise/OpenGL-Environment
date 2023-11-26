@@ -64,11 +64,14 @@ namespace glenv {
 
       void FramebufferResize() override;
 
-      void set3DViewMatrixAndFov(glm::mat4 view, float fov, glm::vec4 camPos) override;
-      void set2DViewMatrixAndScale(glm::mat4 view, float scale) override;
+      void set3DViewMat(glm::mat4 view, glm::vec4 camPos) override;
+      void set2DViewMat(glm::mat4 view) override;
+      void set3DProjMat(glm::mat4 proj) override;
+      void set2DProjMat(glm::mat4 proj) override;
       void setLightingProps(BPLighting lighting) override;
       void setRenderConf(RenderConfig renderConf) override;
       RenderConfig getRenderConf() override;
+      glm::vec2 offscreenSize() override;
 
   private:
       Resource::Model loadModel(Resource::ModelType type, ModelInfo::Model model,
@@ -105,13 +108,11 @@ namespace glenv {
 
       glm::mat4 finalTransform = glm::mat4(1.0f);
       
-      float scale2D = 1.0f; // TODO make 2D scale work
       glm::mat4 proj2D;
       glm::mat4 view2D;
 
       glm::mat4 proj3D;
       glm::mat4 view3D;
-      float fov;
 
       bool inDraw = false;
 
