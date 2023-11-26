@@ -168,11 +168,6 @@ namespace glenv {
       switch(mode) {
       case DrawMode::d2D:
 	  flatShader->Use();
-	  for(int i = 0; i < 4; i++) {	
-	      for(int j = 0; j < 4; j++) {
-		  LOG("["<<i<<"]["<<j<<"] = " << proj2D[i][j]);
-	      }
-	  }
 	  glUniformMatrix4fv(flatShader->Location("projection"), 1,
 			     GL_FALSE, &proj2D[0][0]);
 	  glUniformMatrix4fv(flatShader->Location("view"), 1, GL_FALSE, &view2D[0][0]);
