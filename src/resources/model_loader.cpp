@@ -54,6 +54,10 @@ struct GPUModelGL : public GPUModel {
 ModelLoaderGL::ModelLoaderGL(Resource::Pool pool, InternalTexLoader *texLoader)
     : InternalModelLoader(pool, texLoader) {}
 
+ModelLoaderGL::~ModelLoaderGL() {
+    clearGPU();
+}
+
 void ModelLoaderGL::clearGPU() {
     for (GPUModelGL *model : models)
 	delete model;

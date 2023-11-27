@@ -6,6 +6,10 @@
 TextureLoaderGL::TextureLoaderGL(Resource::Pool pool, RenderConfig conf)
     : InternalTexLoader(pool, conf) {}
 
+TextureLoaderGL::~TextureLoaderGL() {
+    clearGPU();
+}
+
 void TextureLoaderGL::loadGPU() {
     clearGPU();
     inGpu.resize(staged.size());

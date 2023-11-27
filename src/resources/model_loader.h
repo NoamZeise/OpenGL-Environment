@@ -11,6 +11,7 @@ struct GPUModelGL;
 class ModelLoaderGL : public InternalModelLoader {
 public:
     ModelLoaderGL(Resource::Pool pool, InternalTexLoader *texLoader);
+    ~ModelLoaderGL();
     void loadGPU() override;
     void clearGPU() override;
     void DrawQuad(int count);
