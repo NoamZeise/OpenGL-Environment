@@ -29,11 +29,7 @@ namespace glenv {
   const int MAX_DRAWS = 10000;
 
   //match in shaders
-  const int MAX_2D_BATCH = 10000;
-  const int MAX_3D_BATCH = 10000;
   const int MAX_3D_ANIM_BATCH = 1;
-
-  const int MAX_BONES = 50;
 
   class RenderGl : public Render {
   public:
@@ -152,7 +148,7 @@ namespace glenv {
 	  Resource::Model model;
 	  glm::mat4 modelMatrix;
 	  glm::mat4 normalMatrix;
-	  glm::mat4 bones[MAX_BONES];
+	  glm::mat4 bones[Resource::MAX_BONES];
       };
 
       struct DrawCall {
@@ -166,13 +162,13 @@ namespace glenv {
       unsigned int currentDraw = 0;
       DrawCall drawCalls[MAX_DRAWS];
 
-      glm::mat4 perInstance2DModel[MAX_2D_BATCH];
-      glm::vec4 perInstance2DTexOffset[MAX_2D_BATCH];
+      glm::mat4 perInstance2DModel[Resource::MAX_2D_BATCH];
+      glm::vec4 perInstance2DTexOffset[Resource::MAX_2D_BATCH];
       GLuint model2DSSBO;
       GLuint texOffset2DSSBO;
 
-      glm::mat4 perInstance3DModel[MAX_3D_BATCH];
-      glm::mat4 perInstance3DNormal[MAX_3D_BATCH];
+      glm::mat4 perInstance3DModel[Resource::MAX_3D_BATCH];
+      glm::mat4 perInstance3DNormal[Resource::MAX_3D_BATCH];
       GLuint model3DSSBO;
       GLuint normal3DSSBO;
   };

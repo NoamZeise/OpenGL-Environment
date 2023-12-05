@@ -178,7 +178,7 @@ namespace glenv {
 	  break;
       case DrawMode::d3DAnim:
 	  setVPshader(shader3DAnim);
-	  glUniformMatrix4fv(shader3DAnim->Location("bones"), MAX_BONES, GL_FALSE,
+	  glUniformMatrix4fv(shader3DAnim->Location("bones"), Resource::MAX_BONES, GL_FALSE,
 			     &drawCalls[i].d3DAnim.bones[0][0][0]);
 	  glUniformMatrix4fv(shader3DAnim->Location("model"), 1, GL_FALSE,
 			     &drawCalls[i].d3DAnim.modelMatrix[0][0]);
@@ -241,7 +241,7 @@ namespace glenv {
 		 (currentTexture.pool.ID != drawCalls[i].d2D.tex.pool.ID ||
 		  currentTexture.ID != drawCalls[i].d2D.tex.ID ||
 		  currentColour != drawCalls[i].d2D.colour ||
-		  drawCount == MAX_2D_BATCH)
+		  drawCount == Resource::MAX_2D_BATCH)
 		 ) {
 		  draw2DBatch(drawCount, currentTexture, currentColour);
 		  drawCount = 0;
@@ -256,7 +256,7 @@ namespace glenv {
 	      if(((currentModel.pool.ID != drawCalls[i].d3D.model.pool.ID ||
 		   currentModel.ID != drawCalls[i].d3D.model.ID ||
 		   currentModelColour != drawCalls[i].d3D.colour) && drawCount > 0) ||
-		 drawCount == MAX_3D_BATCH) {
+		 drawCount == Resource::MAX_3D_BATCH) {
 		  draw3DBatch(drawCount, currentModel, currentModelColour);
 		  drawCount = 0;
 	      }
@@ -381,7 +381,7 @@ namespace glenv {
 	  drawCalls[currentDraw].mode = DrawMode::d3DAnim;
 	  drawCalls[currentDraw].d3DAnim = DrawAnim3D(model, modelMatrix, normalMatrix);
 	  std::vector<glm::mat4>* bones = animation->getCurrentBones();
-	  for(int i = 0; i < MAX_BONES && i < bones->size(); i++)
+	  for(int i = 0; i < Resource::MAX_BONES && i < bones->size(); i++)
 	      drawCalls[currentDraw].d3DAnim.bones[i] = bones->at(i);
 	  currentDraw++;
       }
