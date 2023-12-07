@@ -361,7 +361,8 @@ namespace glenv {
 	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
 	  return;
       }
-      pools[model.pool.ID]->modelLoader->DrawModel(model, shader3DAnim->Location("spriteColour"));
+      pools[model.pool.ID]->modelLoader->DrawModel(model, shader3DAnim->Location("spriteColour"),
+						   shader3DAnim->Location("enableTex"));
   }
 
   void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix,

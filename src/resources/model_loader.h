@@ -15,7 +15,7 @@ public:
     void loadGPU() override;
     void clearGPU() override;
     void DrawQuad(int count);
-    void DrawModel(Resource::Model model, uint32_t spriteColourShaderLoc);
+    void DrawModel(Resource::Model model, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc);
     void DrawModelInstanced(Resource::Model model, glm::vec4 colour, int count,
 			    uint32_t spriteColourShaderLoc,
 			    uint32_t enableTexShaderLoc);

@@ -12,12 +12,12 @@ struct GLMesh : public GPUMesh {
 	glUniform4fv(colLoc, 1,
 		     colour.a == 0.0f ? &diffuseColour[0] :
 		     &colour[0]);
-	if(enableTexLoc != 0) {
-	    if(texture.ID == UINT32_MAX)
-		glUniform1i(enableTexLoc, GL_FALSE);
-	    else
-		glUniform1i(enableTexLoc, GL_TRUE);
-	}
+
+	if(texture.ID == UINT32_MAX)
+	    glUniform1i(enableTexLoc, GL_FALSE);
+	else
+	    glUniform1i(enableTexLoc, GL_TRUE);
+	
 	if(instanceCount > 1)
 	    vertexData->DrawInstanced(GL_TRIANGLES, instanceCount);
 	else
@@ -81,8 +81,8 @@ void ModelLoaderGL::loadGPU() {
       models[quad.ID]->meshes[0].vertexData->DrawInstanced(GL_TRIANGLES, count);
   }
 
-void ModelLoaderGL::DrawModel(Resource::Model model, uint32_t spriteColourShaderLoc) {
-    draw(model, glm::vec4(1.0f), 1, spriteColourShaderLoc, 0);
+void ModelLoaderGL::DrawModel(Resource::Model model, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc) {
+    draw(model, glm::vec4(1.0f), 1, spriteColourShaderLoc, enableTexShaderLoc);
   }
 
 void ModelLoaderGL::DrawModelInstanced(Resource::Model model, glm::vec4 colour,
