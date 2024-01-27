@@ -490,6 +490,11 @@ namespace glenv {
       setLightingShader(shader3D);
       setLightingShader(shader3DAnim);
   }
+
+  void RenderGl::setShaderProps(ShaderProps props) {
+      this->finalShader->Use();
+      glUniform1f(finalShader->Location("ps.time"), props.time);
+  }
   
   glm::vec2 RenderGl::offscreenSize() {
       return

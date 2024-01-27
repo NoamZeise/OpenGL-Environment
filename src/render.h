@@ -65,6 +65,7 @@ namespace glenv {
       void set3DProjMat(glm::mat4 proj) override;
       void set2DProjMat(glm::mat4 proj) override;
       void setLightingProps(BPLighting lighting) override;
+      void setShaderProps(ShaderProps props) override;
       void setRenderConf(RenderConfig renderConf) override;
       RenderConfig getRenderConf() override;
       glm::vec2 offscreenSize() override;
