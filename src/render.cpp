@@ -494,6 +494,8 @@ namespace glenv {
   void RenderGl::setShaderProps(ShaderProps props) {
       this->finalShader->Use();
       glUniform1f(finalShader->Location("ps.time"), props.time);
+      glUniform1f(finalShader->Location("ps.warp"), props.warp);
+      
   }
   
   glm::vec2 RenderGl::offscreenSize() {
