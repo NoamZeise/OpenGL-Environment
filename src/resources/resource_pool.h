@@ -6,7 +6,8 @@
 #include <resource_loader/font_loader.h>
 #include <graphics/resource_pool.h>
 
-struct GLResourcePool : public ResourcePool {
+class GLResourcePool : public ResourcePool {
+public:
     GLResourcePool(Resource::Pool pool, RenderConfig config);
     ~GLResourcePool();
 
