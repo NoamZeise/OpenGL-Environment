@@ -5,7 +5,3 @@ set(OpenGL-Environment-Proj "OpenGL-Environment")
 project(${OpenGL-Environment-Proj} VERSION 1.0)
 
 add_subdirectory(src)
-
-if(BUILD_TESTS)
-  add_subdirectory(test)
-endif()
