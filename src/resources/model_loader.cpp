@@ -5,18 +5,23 @@ struct GLMesh : public GPUMesh {
     GLVertexData *vertexData;
 
     void draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader,
-	      int colLoc, int enableTexLoc) {
+	      int colLoc, int enableTexLoc, Resource::Texture *tex) {
 	glActiveTexture(GL_TEXTURE0);
-	if(texture.ID != UINT32_MAX)
+	if(tex != nullptr) {
+	    glBindTexture(GL_TEXTURE_2D, texLoader->getViewIndex(*tex));
+	}
+	else if(texture.ID != UINT32_MAX)
 	    glBindTexture(GL_TEXTURE_2D, texLoader->getViewIndex(texture));
+	
+        if(texture.ID == UINT32_MAX && tex == nullptr) {
+	    glUniform1i(enableTexLoc, GL_FALSE);
+	} else {
+	    glUniform1i(enableTexLoc, GL_TRUE);
+	}
+	
 	glUniform4fv(colLoc, 1,
 		     colour.a == 0.0f ? &diffuseColour[0] :
 		     &colour[0]);
-
-	if(texture.ID == UINT32_MAX)
-	    glUniform1i(enableTexLoc, GL_FALSE);
-	else
-	    glUniform1i(enableTexLoc, GL_TRUE);
 	
 	if(instanceCount > 1)
 	    vertexData->DrawInstanced(GL_TRIANGLES, instanceCount);
@@ -44,9 +49,9 @@ struct GPUModelGL : public GPUModel {
     }
 
     void draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader, int colLoc,
-	      int enableTexLoc) {
+	      int enableTexLoc, Resource::Texture *tex) {
 	for (auto& mesh: meshes) {
-	    mesh.draw(colour, instanceCount, texLoader, colLoc, enableTexLoc);
+	    mesh.draw(colour, instanceCount, texLoader, colLoc, enableTexLoc, tex);
 	}
     }
 };
@@ -81,24 +86,26 @@ void ModelLoaderGL::loadGPU() {
       models[quad.ID]->meshes[0].vertexData->DrawInstanced(GL_TRIANGLES, count);
   }
 
-void ModelLoaderGL::DrawModel(Resource::Model model, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc) {
-    draw(model, glm::vec4(1.0f), 1, spriteColourShaderLoc, enableTexShaderLoc);
+void ModelLoaderGL::DrawModel(Resource::Model model,
+			      uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc) {
+    draw(model, nullptr, glm::vec4(1.0f), 1, spriteColourShaderLoc, enableTexShaderLoc);
   }
 
-void ModelLoaderGL::DrawModelInstanced(Resource::Model model, glm::vec4 colour,
+void ModelLoaderGL::DrawModelInstanced(Resource::Model model,
+				       Resource::Texture *tex, glm::vec4 colour,
 				       int count, uint32_t spriteColourShaderLoc,
 				       uint32_t enableTexShaderLoc) {
-    draw(model, colour, count, spriteColourShaderLoc, enableTexShaderLoc);
+    draw(model, tex, colour, count, spriteColourShaderLoc, enableTexShaderLoc);
 }
 
-void ModelLoaderGL::draw(Resource::Model model, glm::vec4 colour, int count,
+void ModelLoaderGL::draw(Resource::Model model, Resource::Texture *tex, glm::vec4 colour, int count,
                          uint32_t colLoc, uint32_t enableTexLoc) {
     if(model.ID >= models.size()) {
 	LOG_ERROR("in draw with out of range model. id: "
                   << model.ID << " -  model count: " << models.size());
 	return;
     }
-    models[model.ID]->draw(colour, count, texLoader, colLoc, enableTexLoc);
+    models[model.ID]->draw(colour, count, texLoader, colLoc, enableTexLoc, tex);
 
 }
 

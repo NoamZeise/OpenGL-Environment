@@ -15,8 +15,11 @@ public:
     void loadGPU() override;
     void clearGPU() override;
     void DrawQuad(int count);
-    void DrawModel(Resource::Model model, uint32_t spriteColourShaderLoc, uint32_t enableTexShaderLoc);
-    void DrawModelInstanced(Resource::Model model, glm::vec4 colour, int count,
+    void DrawModel(Resource::Model model,
+		   uint32_t spriteColourShaderLoc,
+		   uint32_t enableTexShaderLoc);
+    void DrawModelInstanced(Resource::Model model,
+			    Resource::Texture* tex, glm::vec4 colour, int count,
 			    uint32_t spriteColourShaderLoc,
 			    uint32_t enableTexShaderLoc);
     Resource::ModelAnimation getAnimation(Resource::Model model, std::string animation) override;
@@ -26,7 +29,7 @@ private:
     //std::vector<GPUModel*> getModel() override { return models; }
     
     std::vector<GPUModelGL*> models;
-    void draw(Resource::Model model, glm::vec4 colour, int count,
+    void draw(Resource::Model model, Resource::Texture *tex, glm::vec4 colour, int count,
 	      uint32_t colLoc, uint32_t enableTexLoc);
 };
 

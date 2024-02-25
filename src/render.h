@@ -48,7 +48,8 @@ namespace glenv {
       void UseLoadedResources() override {}
 
       void DrawModel(Resource::Model model, glm::mat4 modelMatrix,
-		     glm::mat4 normalMat, glm::vec4 colour) override;
+		     glm::mat4 normalMat, glm::vec4 colour,
+		     Resource::Texture *overrideTex) override;
       void DrawAnimModel(Resource::Model model, glm::mat4 modelMatrix,
 			 glm::mat4 normalMatrix,
 			 Resource::ModelAnimation *animation) override;
@@ -76,7 +77,8 @@ namespace glenv {
 				std::vector<Resource::ModelAnimation> *pGetAnimations);
       void draw2DBatch(int drawCount, Resource::Texture texture,
 		       glm::vec4 currentColour);
-      void draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour);
+      void draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour,
+		       Resource::Texture* overrideTex);
       void draw3DAnim(Resource::Model model);
       void setVPshader(GLShader *shader);
       void setLightingShader(GLShader *shader);
@@ -134,13 +136,16 @@ namespace glenv {
       };
       struct Draw3D {
 	  Draw3D() {}
-	  Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix,
-		 glm::vec4 colour);
-      
+	  Draw3D(Resource::Model model,
+		 glm::mat4 modelMatrix,
+		 glm::mat4 normalMatrix,
+		 glm::vec4 colour,
+		 Resource::Texture* overrideTex);      
 	  Resource::Model model;
 	  glm::mat4 modelMatrix;
 	  glm::mat4 normalMatrix;
 	  glm::vec4 colour;
+	  Resource::Texture *overrideTex;
       };
       struct DrawAnim3D {
 	  DrawAnim3D() {}

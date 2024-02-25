@@ -125,11 +125,13 @@ namespace glenv {
   }
 
   RenderGl::Draw3D::Draw3D(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMatrix,
-			   glm::vec4 colour) {
+			   glm::vec4 colour,
+			   Resource::Texture* overrideTex) {
       this->model = model;
       this->modelMatrix = modelMatrix;
       this->normalMatrix = normalMatrix;
       this->colour = colour;
+      this->overrideTex = overrideTex;
   }
 
   RenderGl::DrawAnim3D::DrawAnim3D(Resource::Model model, glm::mat4 modelMatrix,
@@ -195,7 +197,7 @@ namespace glenv {
 	  draw2DBatch(drawCount, currentTexture, currentColour);	\
 	  break;							\
       case DrawMode::d3D:						\
-	  draw3DBatch(drawCount, currentModel, currentModelColour);			\
+	  draw3DBatch(drawCount, currentModel, currentModelColour, currentOverrideTex);	\
 	  break;							\
       default:								\
 	  throw std::runtime_error("ogl_DRAW_BATCH unknown mode to batch draw!"); \
@@ -225,6 +227,7 @@ namespace glenv {
       glm::vec4 currentColour;
       glm::vec4 currentModelColour = glm::vec4(0.0f);
       Resource::Model currentModel;
+      Resource::Texture* currentOverrideTex = nullptr;
       int drawCount = 0;
       
       for(unsigned int i = 0; i < currentDraw; i++) {
@@ -233,6 +236,18 @@ namespace glenv {
 	      drawCount = 0;
 	      currentMode = drawCalls[i].mode;
 	      setShaderForMode(currentMode, i);
+	  }
+
+	  bool overrideChanged = false;
+	  if(currentMode == DrawMode::d3D && drawCount > 0) {
+	      Resource::Texture* overrideTex = drawCalls[i].d3D.overrideTex;
+	      overrideChanged = true;
+	      if(overrideTex == nullptr && currentOverrideTex == nullptr)
+		  overrideChanged = false;
+	      else if(overrideTex != nullptr && currentOverrideTex != nullptr) {
+		  if(overrideTex->ID == currentOverrideTex->ID)
+		      overrideChanged = false;
+	      }
 	  }
 
 	  switch(currentMode) {
@@ -255,13 +270,16 @@ namespace glenv {
 	  case DrawMode::d3D:
 	      if(((currentModel.pool.ID != drawCalls[i].d3D.model.pool.ID ||
 		   currentModel.ID != drawCalls[i].d3D.model.ID ||
-		   currentModelColour != drawCalls[i].d3D.colour) && drawCount > 0) ||
+		   currentModelColour != drawCalls[i].d3D.colour ||
+		   overrideChanged)
+		  && drawCount > 0) ||
 		 drawCount == Resource::MAX_3D_BATCH) {
-		  draw3DBatch(drawCount, currentModel, currentModelColour);
+		  draw3DBatch(drawCount, currentModel, currentModelColour, currentOverrideTex);
 		  drawCount = 0;
 	      }
 	      currentModel = drawCalls[i].d3D.model;
 	      currentModelColour = drawCalls[i].d3D.colour;
+	      currentOverrideTex = drawCalls[i].d3D.overrideTex;
 	      perInstance3DModel[drawCount] = drawCalls[i].d3D.modelMatrix;
 	      perInstance3DNormal[drawCount] = drawCalls[i].d3D.normalMatrix;
 	      drawCount++;
@@ -325,7 +343,8 @@ namespace glenv {
       pools[texture.pool.ID]->modelLoader->DrawQuad(drawCount);
   }
 
-  void RenderGl::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour) {
+  void RenderGl::draw3DBatch(int drawCount, Resource::Model model, glm::vec4 colour,
+			     Resource::Texture* overrideTex) {
       if(!_poolInUse(model.pool)) {
 	  LOG_ERROR("Tried Drawing with pool that is not in use");
 	  return;
@@ -333,7 +352,7 @@ namespace glenv {
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
       pools[model.pool.ID]->modelLoader->DrawModelInstanced(
-	      model, colour, drawCount,
+	      model, overrideTex, colour, drawCount,
 	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
@@ -366,11 +385,12 @@ namespace glenv {
   }
 
   void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix,
-	    glm::mat4 normalMat, glm::vec4 colour) {
+			   glm::mat4 normalMat, glm::vec4 colour,
+			   Resource::Texture *overrideTex) {
       if(currentDraw < MAX_DRAWS) {
 	  currentDrawMode = DrawMode::d3D;
 	  drawCalls[currentDraw].mode = DrawMode::d3D;
-	  drawCalls[currentDraw++].d3D = Draw3D(model, modelMatrix, normalMat, colour);
+	  drawCalls[currentDraw++].d3D = Draw3D(model, modelMatrix, normalMat, colour, overrideTex);
       }
   }   
 
