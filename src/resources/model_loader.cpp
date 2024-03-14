@@ -3,7 +3,7 @@
 
 struct GLMesh : public GPUMesh {
     GLVertexData *vertexData;
-    void draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader,
+    void draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader,
 	      int colLoc, int enableTexLoc);
 };
 
@@ -12,7 +12,7 @@ struct GPUModelGL : public GPUModel {
     template <typename T_Vert>
     GPUModelGL(LoadedModel<T_Vert> &data);    
     ~GPUModelGL();
-    void draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader, int colLoc,
+    void draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader, int colLoc,
 	      int enableTexLoc);
 };
 
@@ -63,7 +63,7 @@ void ModelLoaderGL::draw(Resource::Model model, int count,
                   << model.ID << " -  model count: " << models.size());
 	return;
     }
-    models[model.ID]->draw(model.colour, count, texLoader, colLoc, enableTexLoc);
+    models[model.ID]->draw(model, count, texLoader, colLoc, enableTexLoc);
 
 }
 
@@ -87,29 +87,7 @@ Resource::ModelAnimation ModelLoaderGL::getAnimation(Resource::Model model, int 
 }
 
 
-///  ---  GL MESH  ---
-
-void GLMesh::draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader,
-		  int colLoc, int enableTexLoc) {
-    glActiveTexture(GL_TEXTURE0);
-    if(texture.ID != Resource::NULL_TEX_ID) {
-	glUniform1i(enableTexLoc, GL_TRUE);
-	glBindTexture(GL_TEXTURE_2D, texLoader->getViewIndex(texture));
-    } else {
-	glUniform1i(enableTexLoc, GL_FALSE);
-    }
-    glUniform4fv(colLoc, 1,
-		 colour.a == 0.0f ? &diffuseColour[0] :
-		 &colour[0]);
-    
-    if(instanceCount > 1)
-	vertexData->DrawInstanced(GL_TRIANGLES, instanceCount);
-    else
-	vertexData->Draw(GL_TRIANGLES);
-}
-
-/// --- GPU Model ---
-
+/// --- Model ---
 
 template<typename T_Vert>
 GPUModelGL::GPUModelGL(LoadedModel<T_Vert> &data) : GPUModel(data) {
@@ -126,9 +104,32 @@ GPUModelGL::~GPUModelGL() {
 	delete mesh.vertexData;
 }
 
-void GPUModelGL::draw(glm::vec4 colour, int instanceCount, InternalTexLoader *texLoader, int colLoc,
-		      int enableTexLoc) {
-    for (auto& mesh: meshes) {
-	mesh.draw(colour, instanceCount, texLoader, colLoc, enableTexLoc);
+void GPUModelGL::draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader,
+		      int colLoc, int enableTexLoc) {
+    for (auto& mesh: meshes)
+	mesh.draw(model, instanceCount, texLoader, colLoc, enableTexLoc);
+}
+
+
+///  ---  MESH  ---
+
+void GLMesh::draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader,
+		  int colLoc, int enableTexLoc) {
+    glActiveTexture(GL_TEXTURE0);
+    Resource::Texture meshTex = model.overrideTexture.ID == Resource::NULL_TEX_ID ?
+	texture : model.overrideTexture;
+    if(meshTex.ID != Resource::NULL_TEX_ID) {
+	glUniform1i(enableTexLoc, GL_TRUE);
+	glBindTexture(GL_TEXTURE_2D, texLoader->getViewIndex(meshTex));
+    } else {
+	glUniform1i(enableTexLoc, GL_FALSE);
     }
+    glUniform4fv(colLoc, 1,
+		 model.colour.a == 0.0f ? &diffuseColour[0] :
+		 &model.colour[0]);
+    
+    if(instanceCount > 1)
+	vertexData->DrawInstanced(GL_TRIANGLES, instanceCount);
+    else if(instanceCount == 1)
+	vertexData->Draw(GL_TRIANGLES);
 }
