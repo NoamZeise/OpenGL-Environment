@@ -16,13 +16,8 @@
 
 #include "framebuffer.h"
 
-class GLResourcePool;
-
-namespace Resource {
-  class GLModelRender;
-} // namespace Resource
-
 class GLVertexData;
+class GLPoolManager;
 
 namespace glenv {
   class GLShader;
@@ -112,8 +107,7 @@ namespace glenv {
       bool inDraw = false;
 
       Resource::Pool defaultPool;
-      std::vector<GLResourcePool*> pools;
-      std::vector<int> freePools;
+      GLPoolManager* pools;
 
       enum class DrawMode {
 	  d2D,

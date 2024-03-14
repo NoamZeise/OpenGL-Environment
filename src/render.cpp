@@ -4,12 +4,14 @@
 #include "shader.h"
 #include "resources/vertex_data.h"
 #include "resources/resource_pool.h"
+#include <resource_loader/pool_manager.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/logger.h>
 #include <graphics/glm_helper.h>
 #include <stdexcept>
 
+class GLPoolManager : public PoolManager<GLResourcePool> {};
 
 glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes);
 
@@ -65,7 +67,8 @@ namespace glenv {
       ogl_helper::createShaderStorageBuffer(&model2DSSBO, sizeAndPtr(perInstance2DModel));  
       ogl_helper::createShaderStorageBuffer(&texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset));
       LOG("shader buffers created");
-      
+
+      pools = new GLPoolManager();
       defaultPool = CreateResourcePool()->id();
       FramebufferResize();
       setLightingProps(BPLighting());
@@ -82,39 +85,26 @@ namespace glenv {
       delete shader3DAnim;
       delete flatShader;
       delete finalShader;
-      for(auto& pool : pools)
-	  delete pool;
+      delete pools;
   }
 
   ResourcePool* RenderGl::CreateResourcePool() {
-      int index = pools.size();
-      if(freePools.empty()) {
-	  pools.push_back(nullptr);
-      } else {
-	  index = freePools.back();
-	  freePools.pop_back();
-      }
-      pools[index] = new GLResourcePool(Resource::Pool(index), renderConf);
-      return pools[index];
+      int i = pools->NextPoolIndex();
+      GLResourcePool* p = new GLResourcePool(Resource::Pool(i), renderConf);      
+      return pools->AddPool(p, i);
   }
   void RenderGl::DestroyResourcePool(Resource::Pool pool) {
-      for(int i = 0; i < pools.size(); i++) {
-	  if(pools[i]->id().ID == pool.ID) {
-	      delete pools[i];
-	      pools[i] = nullptr;
-	      freePools.push_back(i);
-	  }
-      }
+      pools->DeletePool(pool);
   }
 
   ResourcePool* RenderGl::pool(Resource::Pool pool) {
       _throwIfPoolInvaid(pool);
-      return pools[pool.ID];
+      return pools->get(pool);
   }
  
   void RenderGl::LoadResourcesToGPU(Resource::Pool pool) {
       _throwIfPoolInvaid(pool);
-      pools[pool.ID]->loadGpu();
+      pools->get(pool)->loadGpu();
   }
 
   RenderGl::Draw2D::Draw2D(Resource::Texture tex, glm::mat4 model, glm::vec4 colour, glm::vec4 texOffset) {
@@ -311,8 +301,8 @@ namespace glenv {
       ogl_helper::shaderStorageBufferData(model2DSSBO, sizeAndPtr(perInstance2DModel), 4);
       ogl_helper::shaderStorageBufferData(texOffset2DSSBO, sizeAndPtr(perInstance2DTexOffset), 5);
       glActiveTexture(GL_TEXTURE0);
-      glBindTexture(GL_TEXTURE_2D, pools[texture.pool.ID]->texLoader->getViewIndex(texture));
-      pools[texture.pool.ID]->modelLoader->DrawQuad(drawCount);
+      glBindTexture(GL_TEXTURE_2D, pools->get(texture.pool)->texLoader->getViewIndex(texture));
+      pools->get(texture.pool)->modelLoader->DrawQuad(drawCount);
   }
 
   void RenderGl::draw3DBatch(int drawCount, Resource::Model model) {
@@ -322,13 +312,13 @@ namespace glenv {
       }
       ogl_helper::shaderStorageBufferData(model3DSSBO, sizeAndPtr(perInstance3DModel), 2);
       ogl_helper::shaderStorageBufferData(normal3DSSBO, sizeAndPtr(perInstance3DNormal), 3);
-      pools[model.pool.ID]->modelLoader->DrawModelInstanced(
+      pools->get(model.pool.ID)->modelLoader->DrawModelInstanced(
 	      model, drawCount,
 	      shader3D->Location("spriteColour"), shader3D->Location("enableTex"));
   }
 
   bool RenderGl::_validPool(Resource::Pool pool) {
-      if(pool.ID > pools.size() || pools[pool.ID] == nullptr) {
+      if(!pools->ValidPool(pool)) {
 	  LOG_ERROR("Passed Pool does not exist."
 		    " It has either been destroyed or was never created.");
 	  return false;
@@ -337,7 +327,7 @@ namespace glenv {
   }
 
   bool RenderGl::_poolInUse(Resource::Pool pool) {
-    return _validPool(pool) && pools[pool.ID]->usingGPUResources;
+      return _validPool(pool) && pools->get(pool)->usingGPUResources;
   }
 
   void RenderGl::_throwIfPoolInvaid(Resource::Pool pool) {
@@ -351,8 +341,8 @@ namespace glenv {
 	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
 	  return;
       }
-      pools[model.pool.ID]->modelLoader->DrawModel(model, shader3DAnim->Location("spriteColour"),
-						   shader3DAnim->Location("enableTex"));
+      pools->get(model.pool)->modelLoader->DrawModel(
+	      model, shader3DAnim->Location("spriteColour"), shader3DAnim->Location("enableTex"));
   }
 
   void RenderGl::DrawModel(Resource::Model model, glm::mat4 modelMatrix, glm::mat4 normalMat) {
@@ -381,7 +371,6 @@ namespace glenv {
 			  glm::vec4 colour, glm::vec4 texOffset) {
       if(currentDraw < MAX_DRAWS) {
 	  currentDrawMode = DrawMode::d3D;
-	  //	  std::cout << "draw pool id: " << texture.pool.ID << std::endl;
 	  drawCalls[currentDraw].mode = DrawMode::d2D;
 	  drawCalls[currentDraw++].d2D = Draw2D(texture, modelMatrix, colour, texOffset);
       }
@@ -393,7 +382,8 @@ namespace glenv {
 	  LOG_ERROR("tried to draw string with pool that is not currently in use!");
 	  return;
       }
-      auto draws = pools[font.pool.ID]->fontLoader->DrawString(font, text, position, size, depth, colour, rotate);
+      auto draws = pools->get(font.pool)->fontLoader->DrawString(
+	      font, text, position, size, depth, colour, rotate);
       for(const auto &draw: draws) 
 	  DrawQuad(draw.tex, draw.model, draw.colour, draw.texOffset);
   }
