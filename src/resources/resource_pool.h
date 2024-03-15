@@ -4,11 +4,12 @@
 #include "texture_loader.h"
 #include "model_loader.h"
 #include <resource_loader/font_loader.h>
+#include <resource_loader/pool_manager.h>
 #include <graphics/resource_pool.h>
 
 class GLResourcePool : public ResourcePool {
 public:
-    GLResourcePool(Resource::Pool pool, RenderConfig config);
+    GLResourcePool(Resource::Pool pool, RenderConfig config, BasePoolManager* pools);
     ~GLResourcePool();
 
     void loadGpu();
@@ -24,5 +25,7 @@ public:
     ModelLoaderGL* modelLoader;
     bool usingGPUResources = false;
 };
+
+MAKE_POOL_MANAGER(GLPoolManager, GLResourcePool)
 
 #endif

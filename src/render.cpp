@@ -4,14 +4,11 @@
 #include "shader.h"
 #include "resources/vertex_data.h"
 #include "resources/resource_pool.h"
-#include <resource_loader/pool_manager.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/matrix_inverse.hpp>
 #include <graphics/logger.h>
 #include <graphics/glm_helper.h>
 #include <stdexcept>
-
-class GLPoolManager : public PoolManager<GLResourcePool> {};
 
 glm::vec2 getTargetRes(RenderConfig renderConf, glm::vec2 winRes);
 
@@ -90,7 +87,7 @@ namespace glenv {
 
   ResourcePool* RenderGl::CreateResourcePool() {
       int i = pools->NextPoolIndex();
-      GLResourcePool* p = new GLResourcePool(Resource::Pool(i), renderConf);      
+      GLResourcePool* p = new GLResourcePool(Resource::Pool(i), renderConf, pools);   
       return pools->AddPool(p, i);
   }
   void RenderGl::DestroyResourcePool(Resource::Pool pool) {

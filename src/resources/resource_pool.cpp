@@ -2,10 +2,10 @@
 
 #include <graphics/logger.h>
 
-GLResourcePool::GLResourcePool(Resource::Pool pool, RenderConfig config) {
+GLResourcePool::GLResourcePool(Resource::Pool pool, RenderConfig config, BasePoolManager* pools) {
     this->pool = pool;
     texLoader = new TextureLoaderGL(pool, config);
-    modelLoader = new ModelLoaderGL(pool, texLoader);
+    modelLoader = new ModelLoaderGL(pool, pools);
     fontLoader = new InternalFontLoader(pool, texLoader);
 }
 

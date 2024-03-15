@@ -10,7 +10,7 @@ struct GPUModelGL;
 
 class ModelLoaderGL : public InternalModelLoader {
 public:
-    ModelLoaderGL(Resource::Pool pool, InternalTexLoader *texLoader);
+    ModelLoaderGL(Resource::Pool pool, BasePoolManager *pools);
     ~ModelLoaderGL();
     void loadGPU() override;
     void clearGPU() override;

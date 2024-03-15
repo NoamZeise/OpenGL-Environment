@@ -3,7 +3,7 @@
 
 struct GLMesh : public GPUMesh {
     GLVertexData *vertexData;
-    void draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader,
+    void draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
 	      int colLoc, int enableTexLoc);
 };
 
@@ -12,12 +12,12 @@ struct GPUModelGL : public GPUModel {
     template <typename T_Vert>
     GPUModelGL(LoadedModel<T_Vert> &data);    
     ~GPUModelGL();
-    void draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader, int colLoc,
+    void draw(Resource::Model model, int instanceCount, BasePoolManager *pools, int colLoc,
 	      int enableTexLoc);
 };
 
-ModelLoaderGL::ModelLoaderGL(Resource::Pool pool, InternalTexLoader *texLoader)
-    : InternalModelLoader(pool, texLoader) {}
+ModelLoaderGL::ModelLoaderGL(Resource::Pool pool, BasePoolManager *pools)
+    : InternalModelLoader(pool, pools) {}
 
 ModelLoaderGL::~ModelLoaderGL() {
     clearGPU();
@@ -63,7 +63,7 @@ void ModelLoaderGL::draw(Resource::Model model, int count,
                   << model.ID << " -  model count: " << models.size());
 	return;
     }
-    models[model.ID]->draw(model, count, texLoader, colLoc, enableTexLoc);
+    models[model.ID]->draw(model, count, pools, colLoc, enableTexLoc);
 
 }
 
@@ -104,22 +104,20 @@ GPUModelGL::~GPUModelGL() {
 	delete mesh.vertexData;
 }
 
-void GPUModelGL::draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader,
+void GPUModelGL::draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
 		      int colLoc, int enableTexLoc) {
     for (auto& mesh: meshes)
-	mesh.draw(model, instanceCount, texLoader, colLoc, enableTexLoc);
+	mesh.draw(model, instanceCount, pools, colLoc, enableTexLoc);
 }
 
 
 ///  ---  MESH  ---
 
-void GLMesh::draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader,
+void GLMesh::draw(Resource::Model model, int instanceCount, BasePoolManager *pools,
 		  int colLoc, int enableTexLoc) {
     glActiveTexture(GL_TEXTURE0);
-    Resource::Texture meshTex = model.overrideTexture.ID == Resource::NULL_ID ?
-	texture : model.overrideTexture;
-    int texID = texLoader->getViewIndex(meshTex);
-    if(texID != Resource::NULL_ID) {		
+    int texID = modelGetTexID(model, texture, pools);
+    if(texID != -1) {		
 	glUniform1i(enableTexLoc, GL_TRUE);
 	glBindTexture(GL_TEXTURE_2D, texID);
     } else {
