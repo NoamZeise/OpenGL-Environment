@@ -50,8 +50,10 @@ void TextureLoaderGL::clearGPU() {
 unsigned int TextureLoaderGL::getViewIndex(Resource::Texture tex) {
     if(tex.pool != this->pool) {
 	LOG_ERROR("tex loader - getViewIndex: Texture does not belong to this resource pool!");
-	return 0;
+	return Resource::NULL_ID;
     }
+    if(tex.ID == Resource::NULL_ID)
+	return tex.ID;
     if (tex.ID >= inGpu.size()) {
 	LOG_ERROR("in pool: " << tex.pool.ID <<
 		  " texture ID out of range: " << tex.ID

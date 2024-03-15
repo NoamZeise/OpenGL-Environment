@@ -116,11 +116,12 @@ void GPUModelGL::draw(Resource::Model model, int instanceCount, InternalTexLoade
 void GLMesh::draw(Resource::Model model, int instanceCount, InternalTexLoader *texLoader,
 		  int colLoc, int enableTexLoc) {
     glActiveTexture(GL_TEXTURE0);
-    Resource::Texture meshTex = model.overrideTexture.ID == Resource::NULL_TEX_ID ?
+    Resource::Texture meshTex = model.overrideTexture.ID == Resource::NULL_ID ?
 	texture : model.overrideTexture;
-    if(meshTex.ID != Resource::NULL_TEX_ID) {
+    int texID = texLoader->getViewIndex(meshTex);
+    if(texID != Resource::NULL_ID) {		
 	glUniform1i(enableTexLoc, GL_TRUE);
-	glBindTexture(GL_TEXTURE_2D, texLoader->getViewIndex(meshTex));
+	glBindTexture(GL_TEXTURE_2D, texID);
     } else {
 	glUniform1i(enableTexLoc, GL_FALSE);
     }
